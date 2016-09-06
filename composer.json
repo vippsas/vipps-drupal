@@ -1,0 +1,20 @@
+{
+  "name": "drupal/commerce_vipps",
+  "type": "drupal-module",
+  "description": "VIPPS by DNB payment method for Drupal Commerce",
+  "homepage": "http://drupal.org/project/commerce_vipps",
+  "license": "GPL-2.0",
+  "authors": [
+    {
+      "name": "Jakub Piasecki",
+      "email": "jakub@nymedia.no",
+      "role": "Project Lead"
+    }
+  ],
+  "support": {
+    "issues": "http://drupal.org/project/issues/commerce_vipps"
+  },
+  "require": {
+    "zaporylie/vipps": "@dev"
+  }
+}

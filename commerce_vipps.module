@@ -1,0 +1,94 @@
+<?php
+
+/**
+ * @file
+ * Generic hooks implementations.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function commerce_vipps_menu() {
+  $items['admin/commerce/orders/%commerce_order/payments/%commerce_payment_transaction/commerce-vipps/cancel'] = array(
+    'title' => 'Cancel',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_vipps_admin_cancel', 5, 3),
+    'access callback' => 'commerce_vipps_access_callback',
+    'access arguments' => array('cancel', 5, 3),
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+    'type' => MENU_LOCAL_ACTION,
+    'file' => 'commerce_vipps.admin.inc',
+  );
+  $items['admin/commerce/orders/%commerce_order/payments/%commerce_payment_transaction/commerce-vipps/capture'] = array(
+    'title' => 'Capture',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_vipps_admin_capture', 5, 3),
+    'access callback' => 'commerce_vipps_access_callback',
+    'access arguments' => array('capture', 5, 3),
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+    'type' => MENU_LOCAL_ACTION,
+    'file' => 'commerce_vipps.admin.inc',
+  );
+  $items['admin/commerce/orders/%commerce_order/payments/%commerce_payment_transaction/commerce-vipps/credit'] = array(
+    'title' => 'Credit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_vipps_admin_credit', 5, 3),
+    'access callback' => 'commerce_vipps_access_callback',
+    'access arguments' => array('credit', 5, 3),
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+    'type' => MENU_LOCAL_ACTION,
+    'file' => 'commerce_vipps.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Access callback.
+ */
+function commerce_vipps_access_callback($op, $transaction, $order) {
+  switch ($op) {
+    case 'capture':
+      return $transaction->status == COMMERCE_PAYMENT_STATUS_PENDING && commerce_payment_transaction_access('update', $transaction);
+
+    case 'cancel':
+      return $transaction->status == COMMERCE_PAYMENT_STATUS_PENDING && commerce_payment_transaction_access('update', $transaction);
+
+    case 'credit':
+      return $transaction->status == COMMERCE_PAYMENT_STATUS_SUCCESS && commerce_payment_transaction_access('update', $transaction);
+
+    default:
+      return FALSE;
+  }
+}
+
+/**
+ * Implements hook_commerce_payment_method_info().
+ */
+function commerce_vipps_commerce_payment_method_info() {
+  $payment_methods = array();
+
+  $payment_methods['commerce_vipps'] = array(
+    'title' => t('VIPPS by DNB'),
+    'description' => t('Collect payment with VIPPS.'),
+
+    'short_title' => t('VIPPS by DNB'),
+
+    // Start as enabled.
+    'active' => TRUE,
+
+    // Disable payments in order’s Payment tab.
+    'terminal' => FALSE,
+
+    // Sends user offsite.
+    'offsite' => TRUE,
+
+    // Automaticly redirect user offsite.
+    'offsite_autoredirect' => TRUE,
+
+    // File to be included.
+    'file' => 'commerce_vipps.inc',
+  );
+
+  return $payment_methods;
+}
