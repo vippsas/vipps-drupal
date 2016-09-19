@@ -76,15 +76,39 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
   $transaction->amount = $charge['amount'];
   $transaction->currency_code = $charge['currency_code'];
   $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+  commerce_payment_transaction_save($transaction);
+  // @todo: Render by helper function.
+  $transaction->remote_id = 'O' . $transaction->order_id . 'T' . $transaction->transaction_id;
 
-  if (commerce_payment_transaction_save($transaction)) {
+  $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
+  try {
+    $vipps = _commerce_vipps_get_client($settings);
+    $payment = $vipps->payments();
+    $payment
+      ->setOrderID($transaction->remote_id)
+      ->create(
+        // @todo: Use mobile field.
+        '91504800',
+        $transaction->amount,
+        // @todo: Create callback.
+        'http://',
+        NULL,
+        // @todo: Change order and make this field required.
+        'test'
+      );
+    $transaction->payload = $payment->getLastResponse();
+    commerce_payment_transaction_save($transaction);
+
+    // Save current transaction in order.
     if (empty($order->data['commerce_vipps']['current_transaction']) || ($transaction->transaction_id != $order->data['commerce_vipps']['current_transaction'])) {
       $order->data['commerce_vipps']['current_transaction'] = $transaction->transaction_id;
       commerce_order_save($order);
     }
+
+    // @todo: Redirect to loop page or do the loop here?
     $form['#action'] = url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key']);
   }
-  else {
+  catch (Exception $e) {
     $form['#action'] = url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key']);
   }
 
