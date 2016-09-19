@@ -93,7 +93,7 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
         $transaction->amount,
         'Create payment on ' . $base_url,
         // @todo: Create callback.
-        ''
+        url('commerce_vipps/' . $transaction->transaction_id . '/transaction/' . $order->data['payment_redirect_key'])
       );
     $transaction->payload = $payment->getLastResponse();
     commerce_payment_transaction_save($transaction);
@@ -111,12 +111,49 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
     commerce_order_save($order);
   }
 
-  $form['#action'] = url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key']);
+  $form['#action'] = url('checkout/' . $order->order_id . '/commerce_vipps/' . $order->data['payment_redirect_key']);
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Proceed to Vipps'),
   );
   return $form;
+}
+
+/**
+ * @param object $order
+ * @param $payment_redirect_key
+ * @return int|string
+ */
+function commerce_vipps_checkout_page($order, $payment_redirect_key) {
+
+  // Check if there's still need to check.
+  $transaction = commerce_payment_transaction_load($order->data['commerce_vipps']['current_transaction']);
+  if ($transaction->remote_status === COMMERCE_VIPPS_REMOTE_RESERVED) {
+    drupal_goto('checkout/' . $order->order_id . '/payment/return/' . $payment_redirect_key);
+  }
+
+  // Build spinner page.
+  $build = array();
+  $build['#attached']['js'] = array(
+    drupal_get_path('module', 'commerce_vipps') . '/assets/commerce_vipps.js',
+    array(
+      'data' => array(
+        'commerce_vipps' => array(
+          'transaction' => $transaction->transaction_id,
+          'payment_redirect_key' => $payment_redirect_key,
+        ),
+      ),
+      'type' => 'setting'
+    ),
+  );
+  $build['spinner'] = array(
+    '#theme' => 'image',
+    '#path' => drupal_get_path('module', 'commerce_vipps') . '/assets/spinner.gif',
+  );
+  $build['help'] = array(
+    '#markup' => 'help',
+  );
+  return $build;
 }
 
 /**
@@ -130,8 +167,9 @@ function commerce_vipps_redirect_form_validate($order, $payment_method) {
     return FALSE;
   }
 
-  $status = _commerce_vipps_get_status_transaction($transaction);
-  if (isset($status->transactionInfo->status) && $status->transactionInfo->status == 'RESERVE') {
+  _commerce_vipps_get_status_transaction($transaction);
+  if ($transaction->remote_status === COMMERCE_VIPPS_REMOTE_RESERVED) {
+    commerce_payment_transaction_save($transaction);
     return TRUE;
   }
 
@@ -173,14 +211,16 @@ function _commerce_vipps_cancel_transaction($transaction, $skip_save = FALSE) {
  *
  * @throws Exception
  */
-function _commerce_vipps_capture_transaction($transaction, $amount = NULL, $skip_save = FALSE) {
+function _commerce_vipps_capture_transaction($transaction, $amount = 0, $skip_save = FALSE) {
+  global $user;
   if (!isset($amount)) {
     $amount = $transaction->amount;
   }
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
-  // @todo: Do request here, in case of error throw an exception.
-
+  $payment = _commerce_vipps_get_client($settings)->payments()->setOrderID($transaction->remote_id);
+  $payment->capture(t('Captured by @user', array('@user' => $user->name)), $amount);
+  _commerce_vipps_get_status_transaction($transaction);
   if (!$skip_save) {
     commerce_payment_transaction_save($transaction);
   }
@@ -198,7 +238,7 @@ function _commerce_vipps_capture_transaction($transaction, $amount = NULL, $skip
  * 
  * @throws Exception
  */
-function _commerce_vipps_credit_transaction($transaction, $amount = NULL, $skip_save = FALSE) {
+function _commerce_vipps_credit_transaction($transaction, $amount = 0, $skip_save = FALSE) {
   if (!isset($amount)) {
     $amount = $transaction->amount;
   }
@@ -227,7 +267,9 @@ function _commerce_vipps_get_status_transaction($transaction) {
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   $vipps = _commerce_vipps_get_client($settings);
   $payment = $vipps->payments();
-  return $payment->setOrderID($transaction->remote_id)->getStatus();
+  $status = $payment->setOrderID($transaction->remote_id)->getStatus();
+  $transaction->remote_status = $status->transactionInfo->status;
+  return $status;
 }
 
 /**
@@ -246,7 +288,9 @@ function _commerce_vipps_get_details_transaction($transaction) {
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   $vipps = _commerce_vipps_get_client($settings);
   $payment = $vipps->payments();
-  return $payment->setOrderID($transaction->remote_id)->getDetails();
+  $details = $payment->setOrderID($transaction->remote_id)->getDetails();
+  $transaction->payload = $details;
+  return $details;
 }
 
 /**
