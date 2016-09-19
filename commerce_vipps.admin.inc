@@ -8,6 +8,43 @@
 /**
  * Cancel form.
  */
+function commerce_vipps_admin_get($form, &$form_state, $transaction, $order) {
+  $uri = commerce_payment_ui_payment_transaction_uri($transaction);
+  $form['order'] = array(
+    '#type' => 'value',
+    '#value' => $order,
+  );
+  $form['transaction'] = array(
+    '#type' => 'value',
+    '#value' => $transaction,
+  );
+  return confirm_form($form, t('Are you sure you want to %action transaction %transaction.', array('%action' => strtolower(t('Synchronize')), '%transaction' => $transaction->transaction_id)), $uri['path']);
+}
+
+/**
+ * Cancel form: submit handler.
+ */
+function commerce_vipps_admin_get_submit($form, &$form_state) {
+  $transaction = $form_state['values']['transaction'];
+  $order = $form_state['values']['order'];
+  try {
+    module_load_include('inc', 'commerce_vipps');
+    _commerce_vipps_get_details_transaction($transaction);
+    _commerce_vipps_get_status_transaction($transaction);
+    commerce_payment_transaction_save($transaction);
+    drupal_set_message(t('Transaction has been successfully %action.', array('%action' => strtolower(t('Synchronized')))));
+    $uri = commerce_payment_ui_payment_transaction_uri($transaction);
+    $form_state['redirect'] = $uri['path'];
+  }
+  catch (Exception $e) {
+    drupal_set_message(t('Unable to %action transaction: %message', array('%action' => strtolower(t('Synchronize')), '%message' => $e->getMessage())), 'error');
+    $form_state['rebuild'] = TRUE;
+  }
+}
+
+/**
+ * Cancel form.
+ */
 function commerce_vipps_admin_cancel($form, &$form_state, $transaction, $order) {
   $uri = commerce_payment_ui_payment_transaction_uri($transaction);
   $form['order'] = array(
