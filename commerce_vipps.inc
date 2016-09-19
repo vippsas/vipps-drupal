@@ -37,7 +37,7 @@ function commerce_vipps_settings_form($settings = array()) {
     '#type' => 'textfield',
     '#title' => t('Certificate'),
     '#required' => TRUE,
-    '#description' => t('Absolute path to certificate file. Certificate should not be public!'),
+    '#description' => t('Absolute path to certificate file. Certificate should not be public! If your certificate requires password add it after colon char, ex. vipps.p12:password'),
     '#default_value' => $settings['cert'],
     '#element_validate' => array('commerce_vipps_element_validate_file'),
   );
@@ -70,6 +70,8 @@ function commerce_vipps_submit_form_submit($payment_method, $pane_form, $pane_va
  */
 function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_method) {
 
+  global $base_url;
+
   $charge = commerce_payment_order_balance($order);
   $transaction = commerce_payment_transaction_new('commerce_vipps', $order->order_id);
   $transaction->instance_id = $payment_method['instance_id'];
@@ -77,8 +79,7 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
   $transaction->currency_code = $charge['currency_code'];
   $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
   commerce_payment_transaction_save($transaction);
-  // @todo: Render by helper function.
-  $transaction->remote_id = 'O' . $transaction->order_id . 'T' . $transaction->transaction_id;
+  $transaction->remote_id = _commerce_vipps_generate_id($transaction);
 
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   try {
@@ -90,28 +91,27 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
         // @todo: Use mobile field.
         '91504800',
         $transaction->amount,
+        'Create payment on ' . $base_url,
         // @todo: Create callback.
-        'http://',
-        NULL,
-        // @todo: Change order and make this field required.
-        'test'
+        ''
       );
     $transaction->payload = $payment->getLastResponse();
     commerce_payment_transaction_save($transaction);
-
-    // Save current transaction in order.
-    if (empty($order->data['commerce_vipps']['current_transaction']) || ($transaction->transaction_id != $order->data['commerce_vipps']['current_transaction'])) {
-      $order->data['commerce_vipps']['current_transaction'] = $transaction->transaction_id;
-      commerce_order_save($order);
-    }
-
-    // @todo: Redirect to loop page or do the loop here?
-    $form['#action'] = url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key']);
   }
   catch (Exception $e) {
-    $form['#action'] = url('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key']);
+    $transaction->message = $e->getMessage();
+    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+    commerce_payment_transaction_save($transaction);
+    drupal_goto('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key']);
   }
 
+  // Save current transaction in order.
+  if (empty($order->data['commerce_vipps']['current_transaction']) || ($transaction->transaction_id != $order->data['commerce_vipps']['current_transaction'])) {
+    $order->data['commerce_vipps']['current_transaction'] = $transaction->transaction_id;
+    commerce_order_save($order);
+  }
+
+  $form['#action'] = url('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key']);
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Proceed to Vipps'),
@@ -131,8 +131,8 @@ function commerce_vipps_redirect_form_validate($order, $payment_method) {
   }
 
   $status = _commerce_vipps_get_status_transaction($transaction);
-  if ($status) {
-
+  if (isset($status->transactionInfo->status) && $status->transactionInfo->status == 'RESERVE') {
+    return TRUE;
   }
 
   $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
@@ -152,7 +152,8 @@ function commerce_vipps_redirect_form_validate($order, $payment_method) {
  * @throws Exception
  */
 function _commerce_vipps_cancel_transaction($transaction, $skip_save = FALSE) {
-  $settings = commerce_payment_method_instance_load($transaction->instance_id) + _commerce_vipps_default_settings();
+  $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
+  $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   // @todo: Do request here, in case of error throw an exception.
 
   if (!$skip_save) {
@@ -176,7 +177,8 @@ function _commerce_vipps_capture_transaction($transaction, $amount = NULL, $skip
   if (!isset($amount)) {
     $amount = $transaction->amount;
   }
-  $settings = commerce_payment_method_instance_load($transaction->instance_id) + _commerce_vipps_default_settings();
+  $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
+  $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   // @todo: Do request here, in case of error throw an exception.
 
   if (!$skip_save) {
@@ -200,7 +202,8 @@ function _commerce_vipps_credit_transaction($transaction, $amount = NULL, $skip_
   if (!isset($amount)) {
     $amount = $transaction->amount;
   }
-  $settings = commerce_payment_method_instance_load($transaction->instance_id) + _commerce_vipps_default_settings();
+  $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
+  $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   // @todo: Do request here, in case of error throw an exception.
 
   if (!$skip_save) {
@@ -214,10 +217,14 @@ function _commerce_vipps_credit_transaction($transaction, $amount = NULL, $skip_
  * @param object $transaction
  *   Commerce Payment Transaction.
  *
+ * @return object
+ *   Payment status.
+ *
  * @throws Exception
  */
 function _commerce_vipps_get_status_transaction($transaction) {
-  $settings = commerce_payment_method_instance_load($transaction->instance_id) + _commerce_vipps_default_settings();
+  $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
+  $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   $vipps = _commerce_vipps_get_client($settings);
   $payment = $vipps->payments();
   return $payment->setOrderID($transaction->remote_id)->getStatus();
@@ -229,10 +236,14 @@ function _commerce_vipps_get_status_transaction($transaction) {
  * @param object $transaction
  *   Commerce Payment Transaction.
  *
+ * @return object
+ *   Payment details.
+ *
  * @throws Exception
  */
 function _commerce_vipps_get_details_transaction($transaction) {
-  $settings = commerce_payment_method_instance_load($transaction->instance_id) + _commerce_vipps_default_settings();
+  $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
+  $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   $vipps = _commerce_vipps_get_client($settings);
   $payment = $vipps->payments();
   return $payment->setOrderID($transaction->remote_id)->getDetails();
@@ -243,15 +254,27 @@ function _commerce_vipps_get_details_transaction($transaction) {
  * @return /Vipps/Vipps
  */
 function _commerce_vipps_get_client($settings) {
+
+  // Get certificate.
+  list($path, $password) = explode(':', $settings['cert']);
+  if (isset($password)) {
+    $cert = array($path, $password);
+  }
+  else {
+    $cert = $path;
+  }
+
+  // Add certificate.
   $options = array(
-    'cert' => [
-      $settings['cert'],
-      'test',
-    ]
+    'cert' => $cert,
   );
+
+  // Add base uri.
   if ($settings['base_uri']) {
     $options['base_uri'] = $settings['base_uri'];
   }
+
+  // Initiate client.
   $client = new \GuzzleHttp\Client($options);
   $vipps = new \Vipps\Vipps($client);
   return $vipps->setToken($settings['token'])->setMerchantSerialNumber($settings['serial_number'])->setMerchantID($settings['id']);
@@ -270,4 +293,17 @@ function _commerce_vipps_default_settings() {
     'cert' => '',
     'base_uri' => '',
   );
+}
+
+/**
+ * Generate remote transaction ID for transaction.
+ *
+ * @param object $transaction
+ *   Commerce Payment Transaction.
+ *
+ * @return string
+ *   Remote ID.
+ */
+function _commerce_vipps_generate_id($transaction) {
+  return 'O' . $transaction->order_id . 'T' . $transaction->transaction_id;
 }
