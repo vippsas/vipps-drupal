@@ -92,3 +92,13 @@ function commerce_vipps_commerce_payment_method_info() {
 
   return $payment_methods;
 }
+
+/**
+ * Form element validation handler for file elements.
+ */
+function commerce_vipps_element_validate_file($element, &$form_state) {
+  $value = $element['#value'];
+  if ($value !== '' && !file_exists($value)) {
+    form_error($element, t('%name must be an existing file.', array('%name' => $element['#title'])));
+  }
+}
