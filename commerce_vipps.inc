@@ -92,8 +92,7 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
         '91504800',
         $transaction->amount,
         'Create payment on ' . $base_url,
-        // @todo: Create callback.
-        url('commerce_vipps/' . $transaction->transaction_id . '/transaction/' . $order->data['payment_redirect_key'])
+        url('commerce_vipps/' . $transaction->transaction_id . '/transaction/' . $order->data['payment_redirect_key'], array('absolute' => TRUE))
       );
     $transaction->payload = $payment->getLastResponse();
     commerce_payment_transaction_save($transaction);
