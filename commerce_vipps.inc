@@ -41,6 +41,14 @@ function commerce_vipps_settings_form($settings = array()) {
     '#default_value' => $settings['cert'],
     '#element_validate' => array('commerce_vipps_element_validate_file'),
   );
+  $form['mobile'] = array(
+    '#type' => 'select',
+    '#title' => t('Mobile phone value'),
+    '#required' => TRUE,
+    '#description' => t('Which field stores mobile phone number.'),
+    '#default_value' => $settings['mobile'],
+    '#options' => _commerce_vipps_phone_number_properties(),
+  );
   $form['base_uri'] = array(
     '#type' => 'textfield',
     '#title' => t('Base URI'),
@@ -77,7 +85,6 @@ function commerce_vipps_submit_form_submit($payment_method, $pane_form, $pane_va
 function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_method) {
 
   global $base_url;
-
   $charge = commerce_payment_order_balance($order);
   $transaction = commerce_payment_transaction_new('commerce_vipps', $order->order_id);
   $transaction->instance_id = $payment_method['instance_id'];
@@ -89,13 +96,34 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
 
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   try {
+    $wrapper = entity_metadata_wrapper('commerce_order', $order);
+    list($entity_type, $bundle, $property, $sub_property) = explode('|', $settings['mobile']);
+    if ($bundle == 'billing') {
+      $wrapper = $wrapper->commerce_customer_billing;
+    }
+    elseif ($bundle == 'shipping') {
+      $wrapper = $wrapper->commerce_customer_shipping;
+    }
+    else {
+      throw new Exception('Missing phone field.');
+    }
+    if (!empty($sub_property)) {
+      $mobile = $wrapper->{$property}->{$sub_property}->value();
+    }
+    elseif (!empty($property)) {
+      $mobile = $wrapper->{$property}->value();
+    }
+
+    if (empty($mobile)) {
+      throw new Exception('Missing phone value');
+    }
+
     $vipps = _commerce_vipps_get_client($settings);
     $payment = $vipps->payments();
     $payment
       ->setOrderID($transaction->remote_id)
       ->create(
-        // @todo: Use mobile field.
-        '91504800',
+        $mobile,
         $transaction->amount,
         'Create payment on ' . $base_url,
         url('commerce_vipps/' . $transaction->transaction_id . '/transaction/' . $order->data['payment_redirect_key'], array('absolute' => TRUE))
@@ -363,6 +391,7 @@ function _commerce_vipps_default_settings() {
     'token' => '',
     'cert' => '',
     'base_uri' => '',
+    'mobile' => NULL,
     'help' => t('Open VIPPS app on your phone and confirm payment.'),
   );
 }
@@ -378,4 +407,41 @@ function _commerce_vipps_default_settings() {
  */
 function _commerce_vipps_generate_id($transaction) {
   return 'O' . $transaction->order_id . 'T' . $transaction->transaction_id;
+}
+
+function _commerce_vipps_phone_number_properties($flatten = FALSE) {
+  $array = array();
+  $bundles = array(
+    array(
+      'entity_type' => 'commerce_customer_profile',
+      'bundle' => 'billing'
+    ),
+    array(
+      'entity_type' => 'commerce_customer_profile',
+      'bundle' => 'shipping'
+    ),
+  );
+  foreach ($bundles as $bundle) {
+    $bundle_array =& $array[$bundle['entity_type'] . ' - ' . $bundle['bundle']];
+    // Get properties.
+    $info = entity_get_property_info($bundle['entity_type']);
+    $properties = $info['properties'];
+    if (isset($info['bundles'][$bundle['bundle']])) {
+      $properties += $info['bundles'][$bundle['bundle']]['properties'];
+    }
+    // Build select list.
+    foreach ($properties as $key => $property) {
+      $type = isset($property['type']) ? entity_property_extract_innermost_type($property['type']) : 'text';
+      if (isset($property['field']) && $property['field'] && !empty($property['property info'])) {
+        $bundle_array[$bundle['entity_type'] . '|' . $bundle['bundle'] . '|' . $key] = $property['label'];
+        foreach ($property['property info'] as $sub_key => $sub_prop) {
+          $bundle_array[$bundle['entity_type'] . '|' . $bundle['bundle'] . '|' . $key . '|' . $sub_key] = $property['label'] . ' - ' . $sub_prop['label'];
+        }
+      }
+      else {
+        $bundle_array[$bundle['entity_type'] . '|' . $bundle['bundle'] . '|' . $key] = $property['label'];
+      }
+    }
+  }
+  return $flatten ? options_array_flatten($array) : $array;
 }
