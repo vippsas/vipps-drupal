@@ -5,6 +5,7 @@
  * Generic hooks implementations.
  */
 
+define('COMMERCE_VIPPS_REMOTE_INITIATE', 'INITIATE');
 define('COMMERCE_VIPPS_REMOTE_RESERVED', 'RESERVE');
 
 /**

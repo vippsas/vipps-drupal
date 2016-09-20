@@ -47,6 +47,12 @@ function commerce_vipps_settings_form($settings = array()) {
     '#description' => t('Alternatively you can add base URI to test server'),
     '#default_value' => $settings['base_uri'],
   );
+  $form['help'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Help text'),
+    '#description' => t('This text will be displayed when user needs to login to Vipps app and finalize payment.'),
+    '#default_value' => $settings['help'],
+  );
   return $form;
 }
 
@@ -98,6 +104,7 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
     commerce_payment_transaction_save($transaction);
   }
   catch (Exception $e) {
+    drupal_set_message(t('Unfortunately VIPPS is experiencing technical difficulties at the moment. Try again later or choose another payment method.'), 'error');
     $transaction->message = $e->getMessage();
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
     commerce_payment_transaction_save($transaction);
@@ -127,12 +134,17 @@ function commerce_vipps_checkout_page($order, $payment_redirect_key) {
 
   // Check if there's still need to check.
   $transaction = commerce_payment_transaction_load($order->data['commerce_vipps']['current_transaction']);
-  if ($transaction->remote_status === COMMERCE_VIPPS_REMOTE_RESERVED) {
+  if ($transaction->remote_status !== COMMERCE_VIPPS_REMOTE_INITIATE) {
     drupal_goto('checkout/' . $order->order_id . '/payment/return/' . $payment_redirect_key);
   }
+  $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
+  $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
 
   // Build spinner page.
   $build = array();
+  $build['#attached']['css'] = array(
+    drupal_get_path('module', 'commerce_vipps') . '/assets/commerce_vipps.css',
+  );
   $build['#attached']['js'] = array(
     drupal_get_path('module', 'commerce_vipps') . '/assets/commerce_vipps.js',
     array(
@@ -145,12 +157,28 @@ function commerce_vipps_checkout_page($order, $payment_redirect_key) {
       'type' => 'setting'
     ),
   );
+  $build['help'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('commerce-vipps-help'),
+    ),
+    'text' => array(
+      '#markup' => $settings['help'],
+    ),
+  );
   $build['spinner'] = array(
     '#theme' => 'image',
     '#path' => drupal_get_path('module', 'commerce_vipps') . '/assets/spinner.gif',
+    '#attributes' => array(
+      'class' => array('commerce-vipps-spinner'),
+    )
   );
-  $build['help'] = array(
-    '#markup' => 'help',
+  $build['vipps-logo'] = array(
+    '#theme' => 'image',
+    '#path' => drupal_get_path('module', 'commerce_vipps') . '/assets/logo.png',
+    '#attributes' => array(
+      'class' => array('commerce-vipps-logo'),
+    )
   );
   return $build;
 }
@@ -335,6 +363,7 @@ function _commerce_vipps_default_settings() {
     'token' => '',
     'cert' => '',
     'base_uri' => '',
+    'help' => t('Open VIPPS app on your phone and confirm payment.'),
   );
 }
 
