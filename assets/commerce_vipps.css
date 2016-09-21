@@ -1,0 +1,30 @@
+body.page-checkout-commerce-vipps {
+    background-color: #dddddd;
+}
+body.page-checkout-commerce-vipps .site-logo {
+    max-width: 100%;
+    height: auto;
+}
+body.page-checkout-commerce-vipps .content-wrapper {
+    width: 300px;
+    border: 1px solid #aaaaaa;
+    border-radius: 1em;
+    margin: 3em auto;
+    background: #ffffff;
+    box-sizing: border-box;
+    padding: 10px;
+}
+body.page-checkout-commerce-vipps .commerce-vipps-logo {
+    width: 100%;
+}
+body.page-checkout-commerce-vipps .commerce-vipps-spinner {
+    position: relative;
+    left: 50%;
+    margin-left: -32px;
+    width: 64px;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+body.page-checkout-commerce-vipps .commerce-vipps-help {
+    font-size: 1.2em;
+}
