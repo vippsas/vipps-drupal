@@ -113,8 +113,10 @@ function commerce_vipps_theme($existing, $type, $theme, $path) {
  * Implements hook_preprocess_HOOK().
  */
 function commerce_vipps_preprocess_page(&$variables) {
-  if (drupal_match_path($_GET['q'], 'checkout/*/commerce_vipps/*')) {
-    $variables['theme_hook_suggestions'][] = 'page__commerce_vipps';
+  if (drupal_match_path($_GET['q'], 'checkout/*/payment')) {
+    if (isset($variables['page']['content']['system_main']['vipps'])) {
+      $variables['theme_hook_suggestions'][] = 'page__commerce_vipps';
+    }
   }
 }
 
@@ -221,7 +223,7 @@ function commerce_vipps_commerce_payment_method_info() {
     'offsite' => TRUE,
 
     // Automaticly redirect user offsite.
-    'offsite_autoredirect' => TRUE,
+    'offsite_autoredirect' => FALSE,
 
     // File to be included.
     'file' => 'commerce_vipps.inc',

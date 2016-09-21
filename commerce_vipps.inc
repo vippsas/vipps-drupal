@@ -5,7 +5,6 @@
  * Payment callbacks and helper functions.
  */
 
-
 /**
  * Payment method callback: settings form.
  */
@@ -84,20 +83,118 @@ function commerce_vipps_submit_form_submit($payment_method, $pane_form, $pane_va
  */
 function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_method) {
 
+  $transaction = _commerce_vipps_get_current_transaction($order, $payment_method);
+  $payment_redirect_key = $order->data['payment_redirect_key'];
+  // Payment doesn't exist.
+  if (!$transaction) {
+    drupal_set_message(t('Unfortunately VIPPS is experiencing technical difficulties at the moment. Try again later or choose another payment method.'), 'error');
+    drupal_goto('checkout/' . $order->order_id . '/payment/back/' . $payment_redirect_key);
+  }
+
+  // Payment has been processed already.
+  if ($transaction->remote_status !== COMMERCE_VIPPS_REMOTE_INITIATE) {
+    drupal_goto('checkout/' . $order->order_id . '/payment/return/' . $payment_redirect_key);
+  }
+
+  // We need settings.
+  $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
+
+  // Wait for payment confirmation.
+  $build = array();
+  $build['#attached']['css'] = array(
+    drupal_get_path('module', 'commerce_vipps') . '/assets/commerce_vipps.css',
+  );
+  $build['#attached']['js'] = array(
+    drupal_get_path('module', 'commerce_vipps') . '/assets/commerce_vipps.js',
+    array(
+      'data' => array(
+        'commerce_vipps' => array(
+          'transaction' => $transaction->transaction_id,
+          'payment_redirect_key' => $payment_redirect_key,
+        ),
+      ),
+      'type' => 'setting'
+    ),
+  );
+  $build['vipps-help'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('commerce-vipps-help'),
+    ),
+    'text' => array(
+      '#markup' => $settings['help'],
+    ),
+  );
+  $build['vipps-spinner'] = array(
+    '#theme' => 'image',
+    '#path' => drupal_get_path('module', 'commerce_vipps') . '/assets/spinner.gif',
+    '#attributes' => array(
+      'class' => array('commerce-vipps-spinner'),
+    )
+  );
+  $build['vipps-logo'] = array(
+    '#theme' => 'image',
+    '#path' => drupal_get_path('module', 'commerce_vipps') . '/assets/logo.png',
+    '#attributes' => array(
+      'class' => array('commerce-vipps-logo'),
+    )
+  );
+  $form['vipps'] = $build;
+  return $form;
+}
+
+/**
+ * Get OR create new VIPPS payment.
+ *
+ * @param object $order
+ *   Commerce Order.
+ * @param array $payment_method
+ *   Payment method instance definition.
+ *
+ * @return FALSE|object
+ */
+function _commerce_vipps_get_current_transaction($order, $payment_method) {
+  $transaction_id = empty($order->data['commerce_vipps']['current_transaction']) ? NULL : $order->data['commerce_vipps']['current_transaction'];
+  if ($transaction = commerce_payment_transaction_load($transaction_id)) {
+    if ($transaction->status == COMMERCE_PAYMENT_STATUS_PENDING) {
+      return $transaction;
+    }
+  }
+
+  // We would need base url.
   global $base_url;
+
+  // And settings array (with default values).
+  $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
+
+  // Get charge.
   $charge = commerce_payment_order_balance($order);
-  $transaction = commerce_payment_transaction_new('commerce_vipps', $order->order_id);
+
+  // Create transaction.
+  $transaction = commerce_payment_transaction_new($payment_method['method_id'], $order->order_id);
   $transaction->instance_id = $payment_method['instance_id'];
   $transaction->amount = $charge['amount'];
   $transaction->currency_code = $charge['currency_code'];
   $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+
+  // Save to create transaction ID.
   commerce_payment_transaction_save($transaction);
+
+  // Save current transaction in order.
+  $order->data['commerce_vipps']['current_transaction'] = $transaction->transaction_id;
+  commerce_order_save($order);
+
+  // Set transaction ID.
   $transaction->remote_id = _commerce_vipps_generate_id($transaction);
 
-  $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   try {
+    // Get order wrapper.
     $wrapper = entity_metadata_wrapper('commerce_order', $order);
-    list($entity_type, $bundle, $property, $sub_property) = explode('|', $settings['mobile']);
+
+    // Get path to phone field.
+    list($entity_type, $bundle, $property, $sub_property) = array_pad(explode('|', $settings['mobile']), 4, NULL);
+
+    // Get phone parent entity wrapper.
     if ($bundle == 'billing') {
       $wrapper = $wrapper->commerce_customer_billing;
     }
@@ -107,6 +204,8 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
     else {
       throw new Exception('Missing phone field.');
     }
+
+    // Get phone value.
     if (!empty($sub_property)) {
       $mobile = $wrapper->{$property}->{$sub_property}->value();
     }
@@ -114,6 +213,7 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
       $mobile = $wrapper->{$property}->value();
     }
 
+    // Throw exception in case phone field does not exist.
     if (empty($mobile)) {
       throw new Exception('Missing phone value');
     }
@@ -128,29 +228,29 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
         'Create payment on ' . $base_url,
         url('commerce_vipps/' . $transaction->transaction_id . '/transaction/' . $order->data['payment_redirect_key'], array('absolute' => TRUE))
       );
+
+    // Save transaction.
+    $transaction->remote_status = COMMERCE_VIPPS_REMOTE_INITIATE;
     $transaction->payload = $payment->getLastResponse();
     commerce_payment_transaction_save($transaction);
   }
   catch (Exception $e) {
-    drupal_set_message(t('Unfortunately VIPPS is experiencing technical difficulties at the moment. Try again later or choose another payment method.'), 'error');
+
+    // Change status for transaction.
     $transaction->message = $e->getMessage();
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
     commerce_payment_transaction_save($transaction);
-    drupal_goto('checkout/' . $order->order_id . '/payment/back/' . $order->data['payment_redirect_key']);
-  }
 
-  // Save current transaction in order.
-  if (empty($order->data['commerce_vipps']['current_transaction']) || ($transaction->transaction_id != $order->data['commerce_vipps']['current_transaction'])) {
-    $order->data['commerce_vipps']['current_transaction'] = $transaction->transaction_id;
+    // Unset current transaction.
+    $order->data['commerce_vipps']['current_transaction'] = NULL;
     commerce_order_save($order);
+
+    // Return with error.
+    return FALSE;
   }
 
-  $form['#action'] = url('checkout/' . $order->order_id . '/commerce_vipps/' . $order->data['payment_redirect_key']);
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Proceed to Vipps'),
-  );
-  return $form;
+  // Return transaction.
+  return $transaction;
 }
 
 /**
@@ -231,7 +331,6 @@ function commerce_vipps_redirect_form_validate($order, $payment_method) {
   commerce_payment_transaction_save($transaction);
   return FALSE;
 }
-
 
 /**
  * Cancel transaction.
@@ -413,6 +512,10 @@ function _commerce_vipps_generate_id($transaction) {
   return 'O' . $transaction->order_id . 'T' . $transaction->transaction_id;
 }
 
+/**
+ * @param bool $flatten
+ * @return array
+ */
 function _commerce_vipps_phone_number_properties($flatten = FALSE) {
   $array = array();
   $bundles = array(
