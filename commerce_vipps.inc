@@ -155,7 +155,7 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
  */
 function _commerce_vipps_get_current_transaction($order, $payment_method) {
   $transaction_id = empty($order->data['commerce_vipps']['current_transaction']) ? NULL : $order->data['commerce_vipps']['current_transaction'];
-  if ($transaction = commerce_payment_transaction_load($transaction_id)) {
+  if ($transaction_id && $transaction = commerce_payment_transaction_load($transaction_id)) {
     if ($transaction->status == COMMERCE_PAYMENT_STATUS_PENDING) {
       return $transaction;
     }
