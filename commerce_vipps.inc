@@ -215,7 +215,6 @@ function commerce_vipps_checkout_page($order, $payment_redirect_key) {
  * Payment method callback: redirect form return validation.
  */
 function commerce_vipps_redirect_form_validate($order, $payment_method) {
-  // @todo: Process transaction.
   // Should never happen but catch it anyway.
   if (empty($order->data['commerce_vipps']['current_transaction']) || !($transaction = commerce_payment_transaction_load($order->data['commerce_vipps']['current_transaction']))) {
     watchdog('commerce_vipps', 'Missing current transaction id for order @order', array('@order' => $order->order_id), WATCHDOG_CRITICAL);
@@ -245,9 +244,12 @@ function commerce_vipps_redirect_form_validate($order, $payment_method) {
  * @throws Exception
  */
 function _commerce_vipps_cancel_transaction($transaction, $skip_save = FALSE) {
+  global $user;
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
-  // @todo: Do request here, in case of error throw an exception.
+  $payment = _commerce_vipps_get_client($settings)->payments()->setOrderID($transaction->remote_id);
+  $payment->cancel(t('Canceled by @user', array('@user' => $user->name)));
+  _commerce_vipps_get_status_transaction($transaction);
 
   if (!$skip_save) {
     commerce_payment_transaction_save($transaction);
@@ -294,13 +296,15 @@ function _commerce_vipps_capture_transaction($transaction, $amount = 0, $skip_sa
  * @throws Exception
  */
 function _commerce_vipps_credit_transaction($transaction, $amount = 0, $skip_save = FALSE) {
+  global $user;
   if (!isset($amount)) {
     $amount = $transaction->amount;
   }
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
-  // @todo: Do request here, in case of error throw an exception.
-
+  $payment = _commerce_vipps_get_client($settings)->payments()->setOrderID($transaction->remote_id);
+  $payment->refund(t('Credited by @user', array('@user' => $user->name)), $amount);
+  _commerce_vipps_get_status_transaction($transaction);
   if (!$skip_save) {
     commerce_payment_transaction_save($transaction);
   }
