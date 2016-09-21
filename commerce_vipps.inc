@@ -349,6 +349,7 @@ function _commerce_vipps_cancel_transaction($transaction, $skip_save = FALSE) {
   $payment = _commerce_vipps_get_client($settings)->payments()->setOrderID($transaction->remote_id);
   $payment->cancel(t('Canceled by @user', array('@user' => $user->name)));
   _commerce_vipps_get_status_transaction($transaction);
+  _commerce_vipps_get_details_transaction($transaction);
 
   if (!$skip_save) {
     commerce_payment_transaction_save($transaction);
@@ -377,6 +378,9 @@ function _commerce_vipps_capture_transaction($transaction, $amount = 0, $skip_sa
   $payment = _commerce_vipps_get_client($settings)->payments()->setOrderID($transaction->remote_id);
   $payment->capture(t('Captured by @user', array('@user' => $user->name)), $amount);
   _commerce_vipps_get_status_transaction($transaction);
+  _commerce_vipps_get_details_transaction($transaction);
+  $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+  $transaction->amount = $transaction->payload->transactionSummary->capturedAmount - $transaction->payload->transactionSummary->refundedAmount;
   if (!$skip_save) {
     commerce_payment_transaction_save($transaction);
   }
@@ -404,6 +408,8 @@ function _commerce_vipps_credit_transaction($transaction, $amount = 0, $skip_sav
   $payment = _commerce_vipps_get_client($settings)->payments()->setOrderID($transaction->remote_id);
   $payment->refund(t('Credited by @user', array('@user' => $user->name)), $amount);
   _commerce_vipps_get_status_transaction($transaction);
+  _commerce_vipps_get_details_transaction($transaction);
+  $transaction->amount = $transaction->payload->transactionSummary->capturedAmount - $transaction->payload->transactionSummary->refundedAmount;
   if (!$skip_save) {
     commerce_payment_transaction_save($transaction);
   }
@@ -448,6 +454,9 @@ function _commerce_vipps_get_details_transaction($transaction) {
   $payment = $vipps->payments();
   $details = $payment->setOrderID($transaction->remote_id)->getDetails();
   $transaction->payload = $details;
+  if ($transaction->payload->transactionSummary->remainingAmountToRefund == 0 && $transaction->payload->transactionSummary->remainingAmountToCapture == 0) {
+    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+  }
   return $details;
 }
 
