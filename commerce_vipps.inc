@@ -87,8 +87,8 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
   $payment_redirect_key = $order->data['payment_redirect_key'];
   // Payment doesn't exist.
   if (!$transaction) {
-    drupal_set_message(t('Unfortunately VIPPS is experiencing technical difficulties at the moment. Try again later or choose another payment method.'), 'error');
-    drupal_goto('checkout/' . $order->order_id . '/payment/back/' . $payment_redirect_key);
+    commerce_payment_redirect_pane_previous_page($order);
+    drupal_goto(commerce_checkout_order_uri($order));
   }
 
   // Payment has been processed already.
@@ -180,12 +180,13 @@ function _commerce_vipps_get_current_transaction($order, $payment_method) {
   // Save to create transaction ID.
   commerce_payment_transaction_save($transaction);
 
+  // Set transaction ID.
+  $transaction->remote_id = _commerce_vipps_generate_id($transaction);
+  commerce_payment_transaction_save($transaction);
+
   // Save current transaction in order.
   $order->data['commerce_vipps']['current_transaction'] = $transaction->transaction_id;
   commerce_order_save($order);
-
-  // Set transaction ID.
-  $transaction->remote_id = _commerce_vipps_generate_id($transaction);
 
   try {
     // Get order wrapper.
@@ -235,6 +236,14 @@ function _commerce_vipps_get_current_transaction($order, $payment_method) {
     commerce_payment_transaction_save($transaction);
   }
   catch (Exception $e) {
+
+    // Some of the errors should be displayed to customer.
+    if ($e instanceof \Vipps\Exceptions\VippsException && $e->getErrorCode() == 81) {
+      drupal_set_message(t('Unable to process payment: @message', array('@message' => t('User not registered with VIPPS'))), 'error');
+    }
+    else {
+      drupal_set_message(t('Unfortunately VIPPS is experiencing technical difficulties at the moment. Try again later or choose another payment method.'), 'error');
+    }
 
     // Log exception.
     watchdog_exception('commerce_vipps', $e);
