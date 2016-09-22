@@ -236,6 +236,9 @@ function _commerce_vipps_get_current_transaction($order, $payment_method) {
   }
   catch (Exception $e) {
 
+    // Log exception.
+    watchdog_exception('commerce_vipps', $e);
+
     // Change status for transaction.
     $transaction->message = $e->getMessage();
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
@@ -409,7 +412,7 @@ function _commerce_vipps_get_details_transaction($transaction) {
 function _commerce_vipps_get_client($settings) {
 
   // Get certificate.
-  list($path, $password) = explode(':', $settings['cert']);
+  list($path, $password) = array_pad(explode(':', $settings['cert']), 2, NULL);
   if (isset($password)) {
     $cert = array($path, $password);
   }
