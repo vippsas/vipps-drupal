@@ -151,6 +151,9 @@ function commerce_vipps_api_delivery($result) {
  * @return int
  */
 function commerce_vipps_push_callback($transaction, $payment_redirect_key) {
+  // Log each attempt.
+  watchdog('commerce_vipps', 'New incoming call to push endpoint: @data', array('@data' => file_get_contents("php://input")), WATCHDOG_NOTICE);
+  // Load order.
   $order = commerce_order_load($transaction->order_id);
   // Doesn't match.
   if ($order->data['payment_redirect_key'] !== $payment_redirect_key) {
