@@ -11,6 +11,17 @@
 function commerce_vipps_settings_form($settings = array()) {
   $settings += _commerce_vipps_default_settings();
   $form = array();
+  $form['environment'] = array(
+    '#type' => 'radios',
+    '#title' => t('Environment'),
+    '#required' => TRUE,
+    '#description' => t('Choose between live and test environment'),
+    '#default_value' => $settings['environment'],
+    '#options' => array(
+      'test' => t('Test'),
+      'live' => t('Live'),
+    ),
+  );
   $form['serial_number'] = array(
     '#type' => 'textfield',
     '#title' => t('Serial Number'),
@@ -47,12 +58,6 @@ function commerce_vipps_settings_form($settings = array()) {
     '#description' => t('Which field stores mobile phone number.'),
     '#default_value' => $settings['mobile'],
     '#options' => _commerce_vipps_phone_number_properties(),
-  );
-  $form['base_uri'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Base URI'),
-    '#description' => t('Alternatively you can add base URI to test server'),
-    '#default_value' => $settings['base_uri'],
   );
   $form['help'] = array(
     '#type' => 'textarea',
@@ -434,14 +439,22 @@ function _commerce_vipps_get_client($settings) {
     'cert' => $cert,
   );
 
-  // Add base uri.
-  if ($settings['base_uri']) {
-    $options['base_uri'] = $settings['base_uri'];
+  switch ($settings['environment']) {
+    case 'test':
+      $environment = new Vipps\Connection\Test();
+      break;
+
+    case 'live':
+      $environment = new Vipps\Connection\Live();
+      break;
+
+    default:
+      throw new Exception(t('Incorrect VIPPS environment. Contact system administrator.'));
   }
 
   // Initiate client.
   $client = new \GuzzleHttp\Client($options);
-  $vipps = new \Vipps\Vipps($client);
+  $vipps = new \Vipps\Vipps($client, $environment);
   return $vipps->setToken($settings['token'])->setMerchantSerialNumber($settings['serial_number'])->setMerchantID($settings['id']);
 }
 
@@ -452,11 +465,11 @@ function _commerce_vipps_get_client($settings) {
  */
 function _commerce_vipps_default_settings() {
   return array(
+    'environment' => 'test',
     'serial_number' => '',
     'id' => '',
     'token' => '',
     'cert' => '',
-    'base_uri' => '',
     'mobile' => NULL,
     'help' => t('Open VIPPS app on your phone and confirm payment.'),
   );
