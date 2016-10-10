@@ -161,9 +161,7 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
 function _commerce_vipps_get_current_transaction($order, $payment_method) {
   $transaction_id = empty($order->data['commerce_vipps']['current_transaction']) ? NULL : $order->data['commerce_vipps']['current_transaction'];
   if ($transaction_id && $transaction = commerce_payment_transaction_load($transaction_id)) {
-    if ($transaction->status == COMMERCE_PAYMENT_STATUS_PENDING) {
-      return $transaction;
-    }
+    return $transaction;
   }
 
   // We would need base url.
@@ -231,7 +229,7 @@ function _commerce_vipps_get_current_transaction($order, $payment_method) {
       ->create(
         $mobile,
         $transaction->amount,
-        'Create payment on ' . $base_url,
+        t('Payment for order @order_id', array('@order_id' => $wrapper->getIdentifier())),
         url('commerce_vipps/' . $transaction->transaction_id . '/transaction/' . $order->data['payment_redirect_key'], array('absolute' => TRUE))
       );
 
@@ -286,8 +284,16 @@ function commerce_vipps_redirect_form_validate($order, $payment_method) {
     return TRUE;
   }
 
+  // Change transactiion status.
   $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+  $transaction->message = 'Payment failed';
   commerce_payment_transaction_save($transaction);
+
+  // Unset current transaction.
+  unset($order->data['commerce_vipps']['current_transaction']);
+  commerce_order_save($order);
+
+  // Return error.
   return FALSE;
 }
 

@@ -7,6 +7,7 @@
 
 define('COMMERCE_VIPPS_REMOTE_INITIATE', 'INITIATE');
 define('COMMERCE_VIPPS_REMOTE_RESERVED', 'RESERVE');
+define('COMMERCE_VIPPS_REMOTE_CANCELLED', 'CANCEL');
 
 /**
  * Implements hook_menu().
@@ -164,7 +165,7 @@ function commerce_vipps_push_callback($transaction, $payment_redirect_key) {
   // Check payment status.
   _commerce_vipps_get_status_transaction($transaction);
   // Compare payment status.
-  if ($transaction->remote_status !== COMMERCE_VIPPS_REMOTE_RESERVED) {
+  if ($transaction->remote_status === COMMERCE_VIPPS_REMOTE_INITIATE) {
     return MENU_NOT_FOUND;
   }
   // Get details.
