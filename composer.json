@@ -15,6 +15,6 @@
     "issues": "http://drupal.org/project/issues/commerce_vipps"
   },
   "require": {
-    "zaporylie/vipps": "@dev"
+    "zaporylie/vipps": "^0.2"
   }
 }
