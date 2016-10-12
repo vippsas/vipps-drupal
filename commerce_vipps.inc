@@ -230,7 +230,7 @@ function _commerce_vipps_get_current_transaction($order, $payment_method) {
         $mobile,
         $transaction->amount,
         t('Payment for order @order_id', array('@order_id' => $wrapper->getIdentifier())),
-        url('commerce_vipps/' . $transaction->transaction_id . '/transaction/' . $order->data['payment_redirect_key'], array('absolute' => TRUE))
+        url('commerce_vipps/' . $transaction->transaction_id . '/transaction/' . $order->data['payment_redirect_key'], array('absolute' => TRUE, 'https' => TRUE))
       );
 
     // Save transaction.
