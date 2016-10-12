@@ -427,7 +427,7 @@ function _commerce_vipps_get_details_transaction($transaction) {
 
 /**
  * @param $settings
- * @return /Vipps/Vipps
+ * @return /Vipps/VippsInterface
  */
 function _commerce_vipps_get_client($settings) {
 
