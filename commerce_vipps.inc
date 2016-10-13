@@ -428,6 +428,7 @@ function _commerce_vipps_get_details_transaction($transaction) {
 /**
  * @param $settings
  * @return /Vipps/VippsInterface
+ * @throws LogicException
  */
 function _commerce_vipps_get_client($settings) {
 
@@ -455,12 +456,12 @@ function _commerce_vipps_get_client($settings) {
       break;
 
     default:
-      throw new Exception(t('Incorrect VIPPS environment. Contact system administrator.'));
+      throw new LogicException(t('Incorrect VIPPS environment. Contact system administrator.'));
   }
 
   // Initiate client.
-  $client = new \GuzzleHttp\Client($options);
-  $vipps = new \Vipps\Vipps($client, $environment);
+  $httpClient = new Http\Adapter\Guzzle6\Client(new \GuzzleHttp\Client($options));
+  $vipps = new \Vipps\Vipps($httpClient, $environment);
   return $vipps->setToken($settings['token'])->setMerchantSerialNumber($settings['serial_number'])->setMerchantID($settings['id']);
 }
 
