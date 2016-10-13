@@ -1,0 +1,216 @@
+# $Id$
+#
+# Norwegian Bokmål translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  commerce_vipps.admin.inc: n/a
+#  commerce_vipps.module: n/a
+#  commerce_vipps.inc: n/a
+#  commerce_vipps.info: n/a
+#  theme/page--commerce-vipps.tpl.php: n/a
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2016-10-11 08:45+0200\n"
+"PO-Revision-Date: 2016-10-11 12:00+0200\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Norwegian Bokmål <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+"Language: nb\n"
+"X-Generator: Poedit 1.8.9\n"
+
+#: commerce_vipps.admin.inc:21;58;99;141
+msgid "Are you sure you want to %action transaction %transaction."
+msgstr "Er du sikker på at du vil utføre %action på transaksjon %transaction."
+
+#: commerce_vipps.admin.inc:21;40
+msgid "Synchronize"
+msgstr "Synkroniser"
+
+#: commerce_vipps.admin.inc:35;70;112;154
+msgid "Transaction has been successfully %action."
+msgstr "Transaksjonen ble %action uten problemer."
+
+#: commerce_vipps.admin.inc:35
+msgid "Synchronized"
+msgstr "Synkronisert"
+
+#: commerce_vipps.admin.inc:40;75;117;159
+msgid "Unable to %action transaction: %message"
+msgstr "Kunne ikke %action transaksjonen: %message"
+
+#: commerce_vipps.admin.inc:58;75 commerce_vipps.module:17
+msgid "Cancel"
+msgstr "Kanseler"
+
+#: commerce_vipps.admin.inc:70
+msgid "Canceled"
+msgstr "Kanselert"
+
+#: commerce_vipps.admin.inc:95;137
+msgid "Amount"
+msgstr "Beløp"
+
+#: commerce_vipps.admin.inc:99;117 commerce_vipps.module:27
+msgid "Capture"
+msgstr "Trekk"
+
+#: commerce_vipps.admin.inc:112
+msgid "Captured"
+msgstr "Trekt"
+
+#: commerce_vipps.admin.inc:141;159 commerce_vipps.module:37
+msgid "Credit"
+msgstr "Krediter"
+
+#: commerce_vipps.admin.inc:154
+msgid "Credited"
+msgstr "Kreditert"
+
+#: commerce_vipps.inc:16
+msgid "Environment"
+msgstr "Miljø"
+
+#: commerce_vipps.inc:18
+msgid "Choose between live and test environment"
+msgstr "Velg mellom live- eller testmiljø"
+
+#: commerce_vipps.inc:21
+msgid "Test"
+msgstr "Test"
+
+#: commerce_vipps.inc:22
+msgid "Live"
+msgstr "Live"
+
+#: commerce_vipps.inc:27
+msgid "Serial Number"
+msgstr "Serienummer"
+
+#: commerce_vipps.inc:29
+msgid "Merchant Serial Number"
+msgstr "Merchant serienummer"
+
+#: commerce_vipps.inc:34
+msgid "ID"
+msgstr "ID"
+
+#: commerce_vipps.inc:36
+msgid "Merchant ID"
+msgstr "Merchant ID"
+
+#: commerce_vipps.inc:41
+msgid "Token"
+msgstr "Token"
+
+#: commerce_vipps.inc:43
+msgid "Merchant Token"
+msgstr "Merchant Token"
+
+#: commerce_vipps.inc:48
+msgid "Certificate"
+msgstr "Sertifikat"
+
+#: commerce_vipps.inc:50
+msgid "Absolute path to certificate file. Certificate should not be public! If your certificate requires password add it after colon char, ex. vipps.p12:password"
+msgstr "Absolutt sti til sertifikatfil. Sertifikatat skal ikke være offentlig! Hvis ditt sertifikat krever passord, legg det til etter kolon. F. eks. vipps.p12:passord"
+
+#: commerce_vipps.inc:56
+msgid "Mobile phone value"
+msgstr "Mobiltelefon verdi"
+
+#: commerce_vipps.inc:58
+msgid "Which field stores mobile phone number."
+msgstr "Hvilket felt lagrer mobilnummer."
+
+#: commerce_vipps.inc:64
+msgid "Help text"
+msgstr "Hjelpetekst"
+
+#: commerce_vipps.inc:65
+msgid "This text will be displayed when user needs to login to Vipps app and finalize payment."
+msgstr "Denne teksten vises når en bruker trenger å logge på Vipps applikasjonen og fullført betalingen."
+
+#: commerce_vipps.inc:232
+msgid "Payment for order @order_id"
+msgstr "Betaling for ordre @order_id"
+
+#: commerce_vipps.inc:246
+msgid "Unable to process payment: @message"
+msgstr "Kunne ikke prosessere betaling: @message"
+
+#: commerce_vipps.inc:246
+msgid "User not registered with VIPPS"
+msgstr "Brukeren med det aktuelle mobilnummeret er ikke registrert hos Vipps"
+
+#: commerce_vipps.inc:249
+msgid "Unfortunately VIPPS is experiencing technical difficulties at the moment. Try again later or choose another payment method."
+msgstr "Vipps har dessverre tekniske problemer for øyeblikket. Vennligst vent en liten stund og forsøkt igjen, eller velg en annen betalingsmetode."
+
+#: commerce_vipps.inc:316
+msgid "Canceled by @user"
+msgstr "Kanselert av @user"
+
+#: commerce_vipps.inc:345
+msgid "Captured by @user"
+msgstr "Trekt av @user"
+
+#: commerce_vipps.inc:375
+msgid "Credited by @user"
+msgstr "Kreditert av @user"
+
+#: commerce_vipps.inc:459
+msgid "Incorrect VIPPS environment. Contact system administrator."
+msgstr "Ugyldig Vipps miljø. Kontakt systemadministrator."
+
+#: commerce_vipps.inc:481
+msgid "Open VIPPS app on your phone and confirm payment."
+msgstr "Åpne Vipps appen på din mobiltelefon og bekreft betalingen."
+
+#: commerce_vipps.inc:278 commerce_vipps.module:156
+msgid "commerce_vipps"
+msgstr "commerce_vipps"
+
+#: commerce_vipps.inc:278
+msgid "Missing current transaction id for order @order"
+msgstr "Mangler transaksjons ID for ordre @order"
+
+#: commerce_vipps.module:138
+msgid "Site under maintenance"
+msgstr "Siden er under vedlikehold"
+
+#: commerce_vipps.module:141
+msgid "@site is currently under maintenance. We should be back shortly. Thank you for your patience."
+msgstr "@site vedlikeholdes for øyeblikket. Vi er strakt tilbake. Takk for din tålmodighet."
+
+#: commerce_vipps.module:186;189
+msgid "VIPPS by DNB"
+msgstr "Vipps by DNB"
+
+#: commerce_vipps.module:187
+msgid "Collect payment with VIPPS."
+msgstr "Betal med Vipps."
+
+#: commerce_vipps.module:217
+msgid "%name must be an existing file."
+msgstr "%name må være en fil som eksisterer."
+
+#: commerce_vipps.module:156
+msgid "New incoming call to push endpoint: @data"
+msgstr "Ny innkommende forespørsel til push endpoint: @data"
+
+#: commerce_vipps.module:47
+msgid "Sync"
+msgstr "Synkroniser"
+
+#: commerce_vipps.info:0
+msgid "Commerce Vipps"
+msgstr "Commerce Vipps"
+
+#: theme/page--commerce-vipps.tpl.php:4
+msgid "Home"
+msgstr "Hjem"
