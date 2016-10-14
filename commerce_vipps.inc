@@ -216,6 +216,12 @@ function _commerce_vipps_get_current_transaction($order, $payment_method) {
     elseif (!empty($property)) {
       $mobile = $wrapper->{$property}->value();
     }
+    else {
+      $mobile = '';
+    }
+
+    // Remove everything what's not an integer.
+    $mobile = preg_replace("/[^0-9]/", "", $mobile);
 
     // Throw exception in case phone field does not exist.
     if (empty($mobile)) {
@@ -227,8 +233,8 @@ function _commerce_vipps_get_current_transaction($order, $payment_method) {
     $payment
       ->setOrderID($transaction->remote_id)
       ->create(
-        $mobile,
-        $transaction->amount,
+        (int) $mobile,
+        (int) $transaction->amount,
         t('Payment for order @order_id', array('@order_id' => $wrapper->getIdentifier())),
         url('commerce_vipps/' . $transaction->transaction_id . '/transaction/' . $order->data['payment_redirect_key'], array('absolute' => TRUE, 'https' => TRUE))
       );
@@ -243,6 +249,10 @@ function _commerce_vipps_get_current_transaction($order, $payment_method) {
     // Some of the errors should be displayed to customer.
     if ($e instanceof \Vipps\Exceptions\VippsException && $e->getErrorCode() == 81) {
       drupal_set_message(t('Unable to process payment: @message', array('@message' => t('User not registered with VIPPS'))), 'error');
+    }
+    // Some of the errors should be displayed to customer.
+    elseif ($e instanceof \UnexpectedValueException) {
+      drupal_set_message(t('Unable to process payment due to validation errors'), 'error');
     }
     else {
       drupal_set_message(t('Unfortunately VIPPS is experiencing technical difficulties at the moment. Try again later or choose another payment method.'), 'error');
