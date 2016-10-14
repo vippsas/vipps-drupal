@@ -264,6 +264,7 @@ function _commerce_vipps_get_current_transaction($order, $payment_method) {
     // Change status for transaction.
     $transaction->message = $e->getMessage();
     $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+    $transaction->remote_id = NULL;
     commerce_payment_transaction_save($transaction);
 
     // Unset current transaction.
