@@ -337,7 +337,7 @@ function _commerce_vipps_cancel_transaction($transaction, $skip_save = FALSE) {
  *
  * @param object $transaction
  *   Commerce Payment Transaction.
- * @param int|null $amount
+ * @param int $amount
  *   (optional) Capture amount.
  * @param bool $skip_save
  *   (optional) Skip transaction save.
@@ -347,7 +347,7 @@ function _commerce_vipps_cancel_transaction($transaction, $skip_save = FALSE) {
 function _commerce_vipps_capture_transaction($transaction, $amount = 0, $skip_save = FALSE) {
   global $user;
   if (empty($amount)) {
-    $amount = $transaction->amount;
+    $amount = (int) $transaction->amount;
   }
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
@@ -367,7 +367,7 @@ function _commerce_vipps_capture_transaction($transaction, $amount = 0, $skip_sa
  *
  * @param object $transaction
  *   Commerce Payment Transaction.
- * @param int|null $amount
+ * @param int $amount
  *   (optional) Credit amount.
  * @param bool $skip_save
  *   (optional) Skip transaction save.
@@ -377,7 +377,7 @@ function _commerce_vipps_capture_transaction($transaction, $amount = 0, $skip_sa
 function _commerce_vipps_credit_transaction($transaction, $amount = 0, $skip_save = FALSE) {
   global $user;
   if (empty($amount)) {
-    $amount = $transaction->amount;
+    $amount = (int) $transaction->amount;
   }
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
