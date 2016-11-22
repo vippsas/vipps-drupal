@@ -283,21 +283,53 @@ function _commerce_vipps_get_current_transaction($order, $payment_method) {
  * Payment method callback: redirect form return validation.
  */
 function commerce_vipps_redirect_form_validate($order, $payment_method) {
+
   // Should never happen but catch it anyway.
   if (empty($order->data['commerce_vipps']['current_transaction']) || !($transaction = commerce_payment_transaction_load($order->data['commerce_vipps']['current_transaction']))) {
     watchdog('commerce_vipps', 'Missing current transaction id for order @order', array('@order' => $order->order_id), WATCHDOG_CRITICAL);
     return FALSE;
   }
 
-  _commerce_vipps_get_status_transaction($transaction);
-  if ($transaction->remote_status === COMMERCE_VIPPS_REMOTE_RESERVED) {
+  // @todo: Should be wrapped as vipps api can fail.
+  try {
+    _commerce_vipps_get_status_transaction($transaction);
+  }
+  catch (\Vipps\Exceptions\ConnectionException $e) {
+    watchdog_exception('commerce_vipps', $e);
+    watchdog('commerce_vipps', 'Networking issue while getting transaction status: @message', array('@message_id' => $e->getMessage()), WATCHDOG_ERROR);
+    // Assuming data was already synced and status is reserved we can let user
+    // pass (optimistic scenario).
+    if ($transaction->remote_status !== COMMERCE_VIPPS_REMOTE_RESERVE) {
+      // Delay.
+      sleep(10);
+      // Try again.
+      drupal_goto('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key']);
+    }
+  }
+  catch (Exception $e) {
+    watchdog_exception('commerce_vipps', $e);
+    watchdog('commerce_vipps', 'Unknown error when getting transaction status: @message', array('@message_id' => $e->getMessage()), WATCHDOG_CRITICAL);
+  }
+
+  // Check if remote status is "Reserved".
+  if ($transaction->remote_status === COMMERCE_VIPPS_REMOTE_RESERVE) {
+    _commerce_vipps_set_local_status($transaction);
+    $transaction->message = 'Reserved';
     commerce_payment_transaction_save($transaction);
     return TRUE;
   }
+  elseif ($transaction->remote_status === COMMERCE_VIPPS_REMOTE_INITIATE) {
+    // Can't be right, try again.
+    watchdog('commerce_vipps', 'Order is looped in status @remote_status', array('@remote_status' => $transaction->remote_status), WATCHDOG_ERROR);
+    // Delay.
+    sleep(10);
+    // Try again.
+    drupal_goto('checkout/' . $order->order_id . '/payment/return/' . $order->data['payment_redirect_key']);
+  }
 
-  // Change transactiion status.
+  // It seems like transaction failed.
   $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
-  $transaction->message = 'Payment failed';
+  $transaction->message = 'Payment failed: ' . $transaction->remote_status;
   commerce_payment_transaction_save($transaction);
 
   // Unset current transaction.
