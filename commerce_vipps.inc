@@ -617,6 +617,7 @@ function _commerce_vipps_process($limit = 200) {
   $query->entityCondition('entity_type', 'commerce_order')
     ->propertyCondition('changed', strtotime('-5 minutes'), '<')
     ->propertyCondition('status', 'checkout_payment')
+    ->propertyOrderBy('changed', 'DESC')
     ->range(0, $limit);
 
   $result = $query->execute();
