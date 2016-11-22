@@ -326,6 +326,7 @@ function _commerce_vipps_cancel_transaction($transaction, $skip_save = FALSE) {
   $payment->cancel(t('Canceled by @user', array('@user' => $user->name)));
   _commerce_vipps_get_status_transaction($transaction);
   _commerce_vipps_get_details_transaction($transaction);
+  _commerce_vipps_set_local_status($transaction);
 
   if (!$skip_save) {
     commerce_payment_transaction_save($transaction);
@@ -386,6 +387,7 @@ function _commerce_vipps_credit_transaction($transaction, $amount = 0, $skip_sav
   _commerce_vipps_get_status_transaction($transaction);
   _commerce_vipps_get_details_transaction($transaction);
   $transaction->amount = $transaction->payload->transactionSummary->capturedAmount - $transaction->payload->transactionSummary->refundedAmount;
+  _commerce_vipps_set_local_status($transaction);
   if (!$skip_save) {
     commerce_payment_transaction_save($transaction);
   }
@@ -409,7 +411,36 @@ function _commerce_vipps_get_status_transaction($transaction) {
   $payment = $vipps->payments();
   $status = $payment->setOrderID($transaction->remote_id)->getStatus();
   $transaction->remote_status = $status->transactionInfo->status;
+
   return $status;
+}
+
+/**
+ * Set local status for transaction based on remote.
+ *
+ * @param object $transaction
+ *   Commerce Payment Transaction
+ */
+function _commerce_vipps_set_local_status($transaction) {
+  switch ($transaction->remote_status) {
+    case COMMERCE_VIPPS_REMOTE_VOID:
+    case COMMERCE_VIPPS_REMOTE_CANCEL:
+      $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+      break;
+
+    case COMMERCE_VIPPS_REMOTE_INITIATE:
+      $transaction->status = COMMERCE_VIPPS_STATUS_REGISTERED;
+      break;
+
+    case COMMERCE_VIPPS_REMOTE_RESERVE:
+      if ($transaction->status == COMMERCE_VIPPS_STATUS_REGISTERED) {
+        $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+      }
+      elseif ($transaction->payload->transactionSummary->remainingAmountToRefund == 0 && $transaction->payload->transactionSummary->remainingAmountToCapture == 0) {
+        $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+      }
+      break;
+  }
 }
 
 /**
@@ -430,9 +461,6 @@ function _commerce_vipps_get_details_transaction($transaction) {
   $payment = $vipps->payments();
   $details = $payment->setOrderID($transaction->remote_id)->getDetails();
   $transaction->payload = $details;
-  if ($transaction->payload->transactionSummary->remainingAmountToRefund == 0 && $transaction->payload->transactionSummary->remainingAmountToCapture == 0) {
-    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
-  }
   return $details;
 }
 

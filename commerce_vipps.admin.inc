@@ -31,6 +31,7 @@ function commerce_vipps_admin_get_submit($form, &$form_state) {
     module_load_include('inc', 'commerce_vipps');
     _commerce_vipps_get_details_transaction($transaction);
     _commerce_vipps_get_status_transaction($transaction);
+    _commerce_vipps_set_local_status($transaction);
     commerce_payment_transaction_save($transaction);
     drupal_set_message(t('Transaction has been successfully %action.', array('%action' => strtolower(t('Synchronized')))));
     $uri = commerce_payment_ui_payment_transaction_uri($transaction);

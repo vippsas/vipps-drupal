@@ -6,8 +6,15 @@
  */
 
 define('COMMERCE_VIPPS_REMOTE_INITIATE', 'INITIATE');
-define('COMMERCE_VIPPS_REMOTE_RESERVED', 'RESERVE');
-define('COMMERCE_VIPPS_REMOTE_CANCELLED', 'CANCEL');
+define('COMMERCE_VIPPS_REMOTE_REGISTER', 'REGISTER');
+define('COMMERCE_VIPPS_REMOTE_RESERVE', 'RESERVE');
+define('COMMERCE_VIPPS_REMOTE_SALE', 'SALE');
+define('COMMERCE_VIPPS_REMOTE_CANCEL', 'CANCEL');
+define('COMMERCE_VIPPS_REMOTE_VOID', 'VOID');
+define('COMMERCE_VIPPS_REMOTE_AUTOREVERSAL', 'AUTOREVERSAL');
+define('COMMERCE_VIPPS_REMOTE_AUTOCANCEL', 'AUTOCANCEL');
+
+define('COMMERCE_VIPPS_STATUS_REGISTERED', 'initiate');
 
 /**
  * Implements hook_menu().
@@ -75,13 +82,13 @@ function commerce_vipps_access_callback($op, $transaction, $order) {
   }
   switch ($op) {
     case 'capture':
-      return in_array($transaction->status, array(COMMERCE_PAYMENT_STATUS_PENDING, COMMERCE_PAYMENT_STATUS_SUCCESS)) && in_array($transaction->remote_status, array(COMMERCE_VIPPS_REMOTE_RESERVED)) && (!isset($transaction->payload->transactionSummary->remainingAmountToCapture) || $transaction->payload->transactionSummary->remainingAmountToCapture > 0) && commerce_payment_transaction_access('update', $transaction);
+      return in_array($transaction->status, array(COMMERCE_PAYMENT_STATUS_PENDING, COMMERCE_PAYMENT_STATUS_SUCCESS)) && in_array($transaction->remote_status, array(COMMERCE_VIPPS_REMOTE_RESERVE)) && (!isset($transaction->payload->transactionSummary->remainingAmountToCapture) || $transaction->payload->transactionSummary->remainingAmountToCapture > 0) && commerce_payment_transaction_access('update', $transaction);
 
     case 'cancel':
-      return $transaction->status == COMMERCE_PAYMENT_STATUS_PENDING && in_array($transaction->remote_status, array(COMMERCE_VIPPS_REMOTE_RESERVED)) && commerce_payment_transaction_access('update', $transaction);
+      return $transaction->status == COMMERCE_PAYMENT_STATUS_PENDING && in_array($transaction->remote_status, array(COMMERCE_VIPPS_REMOTE_RESERVE)) && commerce_payment_transaction_access('update', $transaction);
 
     case 'credit':
-      return in_array($transaction->status, array(COMMERCE_PAYMENT_STATUS_SUCCESS)) && in_array($transaction->remote_status, array(COMMERCE_VIPPS_REMOTE_RESERVED)) && isset($transaction->payload->transactionSummary->remainingAmountToRefund) && $transaction->payload->transactionSummary->remainingAmountToRefund && commerce_payment_transaction_access('update', $transaction);
+      return in_array($transaction->status, array(COMMERCE_PAYMENT_STATUS_SUCCESS)) && in_array($transaction->remote_status, array(COMMERCE_VIPPS_REMOTE_RESERVE)) && isset($transaction->payload->transactionSummary->remainingAmountToRefund) && $transaction->payload->transactionSummary->remainingAmountToRefund && commerce_payment_transaction_access('update', $transaction);
 
     case 'get':
       return commerce_payment_transaction_access('update', $transaction);
