@@ -561,6 +561,8 @@ function _commerce_vipps_default_settings() {
  *
  * @return string
  *   Remote ID.
+ *
+ * @todo: Generate random key.
  */
 function _commerce_vipps_generate_id($transaction) {
   return 'O' . $transaction->order_id . 'T' . $transaction->transaction_id;
