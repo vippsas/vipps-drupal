@@ -624,13 +624,14 @@ function _commerce_vipps_process($limit = 200) {
     watchdog('commerce_vipps', 'Found 0 orders', array(), WATCHDOG_NOTICE);
     return;
   }
-  watchdog('commerce_vipps', 'Found @count orders', array('@count' => count($result['commerce_order'])), WATCHDOG_NOTICE);
+  watchdog('commerce_vipps', 'Found @count orders', array('@count' => count($result['commerce_order'])), WATCHDOG_DEBUG);
   foreach (array_keys($result['commerce_order']) as $order_id) {
     $order = entity_load_single('commerce_order', $order_id);
 
     // Ignore if payment method is different than vipps.
     $instance = commerce_payment_method_instance_load($order->data['payment_method']);
     if ($instance['method_id'] !== 'commerce_vipps') {
+      watchdog('commerce_vipps', 'Incorrect payment method: @method', array('@method' => $instance['method_id']), WATCHDOG_DEBUG);
       continue;
     }
 
