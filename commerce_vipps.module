@@ -157,13 +157,27 @@ function commerce_vipps_api_delivery($result) {
 }
 
 /**
+ * Implements hook_commerce_payment_transaction_status_info().
+ */
+function commerce_vipps_commerce_payment_transaction_status_info() {
+  $status[COMMERCE_VIPPS_STATUS_REGISTERED] = array(
+    'status' => COMMERCE_VIPPS_STATUS_REGISTERED,
+    'title' => t('Registered'),
+    'icon' => drupal_get_path('module', 'commerce_payment') . '/theme/icon-pending.png',
+  );
+  return $status;
+}
+
+/**
  * @param $transaction
  * @param $payment_redirect_key
  * @return int
  */
 function commerce_vipps_push_callback($transaction, $payment_redirect_key) {
   // Log each attempt.
-  watchdog('commerce_vipps', 'New incoming call to push endpoint: @data', array('@data' => file_get_contents("php://input")), WATCHDOG_NOTICE);
+  if ($request = file_get_contents("php://input")) {
+    watchdog('commerce_vipps', 'New incoming call to push endpoint: @data', array('@data' => $request), WATCHDOG_NOTICE);
+  }
   // Load order.
   $order = commerce_order_load($transaction->order_id);
   // Doesn't match.
@@ -174,20 +188,21 @@ function commerce_vipps_push_callback($transaction, $payment_redirect_key) {
   module_load_include('inc', 'commerce_vipps');
   // Check payment status.
   _commerce_vipps_get_status_transaction($transaction);
-  // Compare payment status.
+
+  // Continue if status is different than initiate.
   if ($transaction->remote_status === COMMERCE_VIPPS_REMOTE_INITIATE) {
     return MENU_NOT_FOUND;
   }
+
   // Get details.
   _commerce_vipps_get_details_transaction($transaction);
+
+  // Local status.
+  _commerce_vipps_set_local_status($transaction);
+
   // Save in transaction.
   commerce_payment_transaction_save($transaction);
-  // Run checkout complete for those who forget to go back to checkout page.
-  $wrapper = entity_metadata_wrapper('commerce_order', $order);
-  $allowed_state = array('checkout');
-  if ($transaction->remote_status === COMMERCE_VIPPS_REMOTE_RESERVED && in_array($wrapper->state->value(), $allowed_state)) {
-    commerce_checkout_complete($order);
-  }
+
   // Return 200.
   return 'ok';
 }

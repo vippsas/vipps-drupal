@@ -175,10 +175,10 @@ function _commerce_vipps_get_current_transaction($order, $payment_method) {
 
   // Create transaction.
   $transaction = commerce_payment_transaction_new($payment_method['method_id'], $order->order_id);
+  $transaction->status = COMMERCE_VIPPS_STATUS_REGISTERED;
   $transaction->instance_id = $payment_method['instance_id'];
   $transaction->amount = $charge['amount'];
   $transaction->currency_code = $charge['currency_code'];
-  $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
 
   // Save to create transaction ID.
   commerce_payment_transaction_save($transaction);
@@ -573,4 +573,86 @@ function _commerce_vipps_phone_number_properties($flatten = FALSE) {
     }
   }
   return $flatten ? options_array_flatten($array) : $array;
+}
+
+/**
+ * @param $limit
+ */
+function _commerce_vipps_process($limit = 200) {
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'commerce_order')
+    ->propertyCondition('changed', strtotime('-5 minutes'), '<')
+    ->propertyCondition('status', 'checkout_payment')
+    ->range(0, $limit);
+
+  $result = $query->execute();
+  if (!isset($result['commerce_order'])) {
+    watchdog('commerce_vipps', 'Found 0 orders', array(), WATCHDOG_NOTICE);
+    return;
+  }
+  watchdog('commerce_vipps', 'Found @count orders', array('@count' => count($result['commerce_order'])), WATCHDOG_NOTICE);
+  foreach (array_keys($result['commerce_order']) as $order_id) {
+    $order = entity_load_single('commerce_order', $order_id);
+
+    // Ignore if payment method is different than vipps.
+    $instance = commerce_payment_method_instance_load($order->data['payment_method']);
+    if ($instance['method_id'] !== 'commerce_vipps') {
+      continue;
+    }
+
+    try {
+      // Ensure order status is correct.
+      if ($order->status !== 'checkout_payment') {
+        throw new Exception('Wrong status: ' . $order->status);
+      }
+
+      // Get transaction.
+      if (empty($order->data['commerce_vipps']['current_transaction'])) {
+        throw new Exception('Unable to find referenced transaction');
+      }
+      $transaction = commerce_payment_transaction_load($order->data['commerce_vipps']['current_transaction']);
+      if (!$transaction) {
+        throw new Exception('Unable to load referenced transaction');
+      }
+
+      _commerce_vipps_get_status_transaction($transaction);
+
+      switch ($transaction->remote_status) {
+        case COMMERCE_VIPPS_REMOTE_VOID:
+        case COMMERCE_VIPPS_REMOTE_CANCEL:
+          $transaction->message = 'Transaction canceled by user';
+          _commerce_vipps_set_local_status($transaction);
+          commerce_payment_transaction_save($transaction);
+          unset($order->data['commerce_vipps']['current_transaction']);
+          commerce_payment_redirect_pane_previous_page($order, 'Commerce Vipps: Order canceled');
+          watchdog('commerce_vipps', 'Payment @transaction_id canceled due to @reason by Drush.', array('@transaction_id' => $transaction->transaction_id, '@reason' => 'cancellation'), WATCHDOG_WARNING);
+          break;
+
+        case COMMERCE_VIPPS_REMOTE_INITIATE:
+          $transaction->message = 'Time out';
+          $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+          commerce_payment_transaction_save($transaction);
+          unset($order->data['commerce_vipps']['current_transaction']);
+          commerce_payment_redirect_pane_previous_page($order, 'Commerce Vipps: Timeout');
+          watchdog('commerce_vipps', 'Payment @transaction_id canceled due to @reason by Drush.', array('@transaction_id' => $transaction->transaction_id, '@reason' => 'timeout'), WATCHDOG_WARNING);
+          break;
+
+        case COMMERCE_VIPPS_REMOTE_RESERVE:
+          _commerce_vipps_get_details_transaction($transaction);
+          _commerce_vipps_set_local_status($transaction);
+          $transaction->message = 'Reserved';
+          commerce_payment_transaction_save($transaction);
+          commerce_checkout_complete($order);
+          watchdog('commerce_vipps', 'Payment @transaction_id fulfilled by Drush.', array('@transaction_id' => $transaction->transaction_id), WATCHDOG_WARNING);
+          break;
+
+        default:
+          throw new Exception('Unknown transaction status: ' . $transaction->remote_status);
+      }
+
+    }
+    catch (Exception $e) {
+      watchdog('commerce_vipps', 'Order @order_id could not be processed: @message', array('@order_id' => $order_id, '@message' => $e->getMessage()), WATCHDOG_WARNING);
+    }
+  }
 }
