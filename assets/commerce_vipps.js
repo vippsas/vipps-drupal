@@ -8,10 +8,10 @@
                 success: function(data, textStatus, XMLHttpRequest){
                     location.reload();
                 },
-                error:function (xhr, ajaxOptions, thrownError){
+                error: function (xhr, ajaxOptions, thrownError){
                     setTimeout(function () {
                         Drupal.attachBehaviors(context, settings);
-                    }, 1000);
+                    }, 2000);
                 }
             });
         }
