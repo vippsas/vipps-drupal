@@ -250,6 +250,10 @@ function _commerce_vipps_get_current_transaction($order, $payment_method) {
     if ($e instanceof \Vipps\Exceptions\VippsException && $e->getErrorCode() == 81) {
       drupal_set_message(t('Unable to process payment: @message', array('@message' => t('User not registered with VIPPS'))), 'error');
     }
+    // User's app is unsupported.
+    elseif ($e instanceof \Vipps\Exceptions\VippsException && $e->getErrorCode() == 82) {
+      drupal_set_message(t('Unable to process payment: @message', array('@message' => t('User App Version is not supported'))), 'error');
+    }
     // Some of the errors should be displayed to customer.
     elseif ($e instanceof \UnexpectedValueException) {
       drupal_set_message(t('Unable to process payment due to validation errors'), 'error');
