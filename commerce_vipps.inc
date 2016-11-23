@@ -457,10 +457,12 @@ function _commerce_vipps_set_local_status($transaction) {
   switch ($transaction->remote_status) {
     case COMMERCE_VIPPS_REMOTE_VOID:
     case COMMERCE_VIPPS_REMOTE_CANCEL:
+    case COMMERCE_VIPPS_REMOTE_FAILED:
       $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
       break;
 
     case COMMERCE_VIPPS_REMOTE_INITIATE:
+    case COMMERCE_VIPPS_REMOTE_REGISTER:
       $transaction->status = COMMERCE_VIPPS_STATUS_REGISTERED;
       break;
 
@@ -656,12 +658,14 @@ function _commerce_vipps_process($limit = 200) {
       switch ($transaction->remote_status) {
         case COMMERCE_VIPPS_REMOTE_VOID:
         case COMMERCE_VIPPS_REMOTE_CANCEL:
-          $transaction->message = 'Transaction canceled by user';
+        case COMMERCE_VIPPS_REMOTE_FAILED:
+          $transaction->message = 'Transaction cancelled: @remote_status';
+          $transaction->message_variables = array('@remote_status' => $transaction->remote_status);
           _commerce_vipps_set_local_status($transaction);
           commerce_payment_transaction_save($transaction);
           unset($order->data['commerce_vipps']['current_transaction']);
-          commerce_payment_redirect_pane_previous_page($order, 'Commerce Vipps: Order canceled');
-          watchdog('commerce_vipps', 'Payment @transaction_id canceled due to @reason by Drush.', array('@transaction_id' => $transaction->transaction_id, '@reason' => 'cancellation'), WATCHDOG_WARNING);
+          commerce_payment_redirect_pane_previous_page($order, 'Commerce Vipps: Transaction cancelled');
+          watchdog('commerce_vipps', 'Payment @transaction_id cancelled due to remote status @reason by Drush.', array('@transaction_id' => $transaction->transaction_id, '@reason' => $transaction->remote_status), WATCHDOG_WARNING);
           break;
 
         case COMMERCE_VIPPS_REMOTE_INITIATE:
@@ -670,7 +674,7 @@ function _commerce_vipps_process($limit = 200) {
           commerce_payment_transaction_save($transaction);
           unset($order->data['commerce_vipps']['current_transaction']);
           commerce_payment_redirect_pane_previous_page($order, 'Commerce Vipps: Timeout');
-          watchdog('commerce_vipps', 'Payment @transaction_id canceled due to @reason by Drush.', array('@transaction_id' => $transaction->transaction_id, '@reason' => 'timeout'), WATCHDOG_WARNING);
+          watchdog('commerce_vipps', 'Payment @transaction_id cancelled due to @reason by Drush.', array('@transaction_id' => $transaction->transaction_id, '@reason' => 'timeout'), WATCHDOG_WARNING);
           break;
 
         case COMMERCE_VIPPS_REMOTE_RESERVE:
