@@ -318,7 +318,7 @@ function commerce_vipps_redirect_form_validate($order, $payment_method) {
     commerce_payment_transaction_save($transaction);
     return TRUE;
   }
-  elseif ($transaction->remote_status === COMMERCE_VIPPS_REMOTE_INITIATE) {
+  elseif (in_array($transaction->remote_status, array(COMMERCE_VIPPS_REMOTE_INITIATE, COMMERCE_VIPPS_REMOTE_REGISTER))) {
     // Can't be right, try again.
     watchdog('commerce_vipps', 'Order is looped in status @remote_status', array('@remote_status' => $transaction->remote_status), WATCHDOG_ERROR);
     // Delay.

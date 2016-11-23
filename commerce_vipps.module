@@ -189,8 +189,8 @@ function commerce_vipps_push_callback($transaction, $payment_redirect_key) {
   // Check payment status.
   _commerce_vipps_get_status_transaction($transaction);
 
-  // Continue if status is different than initiate.
-  if ($transaction->remote_status === COMMERCE_VIPPS_REMOTE_INITIATE) {
+  // Continue if status is different than initiate (new payment) or register (waiting for psp).
+  if (in_array($transaction->remote_status, array(COMMERCE_VIPPS_REMOTE_INITIATE, COMMERCE_VIPPS_REMOTE_REGISTER))) {
     return MENU_NOT_FOUND;
   }
 
