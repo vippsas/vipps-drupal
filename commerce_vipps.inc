@@ -360,6 +360,8 @@ function _commerce_vipps_cancel_transaction($transaction, $skip_save = FALSE) {
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   $payment = _commerce_vipps_get_client($settings)->payments()->setOrderID($transaction->remote_id);
   $payment->cancel(t('Canceled by @user', array('@user' => $user->name)));
+  $transaction->message = 'Canceled';
+  $transaction->message_variables = array();
   _commerce_vipps_get_status_transaction($transaction);
   _commerce_vipps_get_details_transaction($transaction);
   _commerce_vipps_set_local_status($transaction);
@@ -390,6 +392,8 @@ function _commerce_vipps_capture_transaction($transaction, $amount = 0, $skip_sa
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   $payment = _commerce_vipps_get_client($settings)->payments()->setOrderID($transaction->remote_id);
   $payment->capture(t('Captured by @user', array('@user' => $user->name)), $amount);
+  $transaction->message = 'Captured @amount';
+  $transaction->message_variables = array('@amount' => $amount);
   _commerce_vipps_get_status_transaction($transaction);
   _commerce_vipps_get_details_transaction($transaction);
   $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
@@ -420,6 +424,8 @@ function _commerce_vipps_credit_transaction($transaction, $amount = 0, $skip_sav
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   $payment = _commerce_vipps_get_client($settings)->payments()->setOrderID($transaction->remote_id);
   $payment->refund(t('Credited by @user', array('@user' => $user->name)), $amount);
+  $transaction->message = 'Credited @amount';
+  $transaction->message_variables = array('@amount' => $amount);
   _commerce_vipps_get_status_transaction($transaction);
   _commerce_vipps_get_details_transaction($transaction);
   $transaction->amount = $transaction->payload->transactionSummary->capturedAmount - $transaction->payload->transactionSummary->refundedAmount;
