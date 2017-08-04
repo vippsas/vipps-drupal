@@ -16,7 +16,6 @@
   },
   "require": {
     "php-http/guzzle6-adapter": "^1.0",
-    "php-http/message": "^1.0",
-    "zaporylie/vipps": "^0.4"
+    "zaporylie/vipps": "1.0-dev"
   }
 }
