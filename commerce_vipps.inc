@@ -506,38 +506,13 @@ function _commerce_vipps_get_details_transaction($transaction) {
  * @throws LogicException
  */
 function _commerce_vipps_get_client($settings) {
-
-  // Get certificate.
-  list($path, $password) = array_pad(explode(':', $settings['cert']), 2, NULL);
-  if (isset($password)) {
-    $cert = array($path, $password);
-  }
-  else {
-    $cert = $path;
-  }
-
-  // Add certificate.
-  $options = array(
-    'cert' => $cert,
-  );
-
-  switch ($settings['environment']) {
-    case 'test':
-      $environment = new Vipps\Connection\Test();
-      break;
-
-    case 'live':
-      $environment = new Vipps\Connection\Live();
-      break;
-
-    default:
-      throw new LogicException(t('Incorrect VIPPS environment. Contact system administrator.'));
-  }
-
   // Initiate client.
-  $httpClient = new Http\Adapter\Guzzle6\Client(new \GuzzleHttp\Client($options));
-  $vipps = new \Vipps\Vipps($httpClient, $environment);
-  return $vipps->setToken($settings['token'])->setMerchantSerialNumber($settings['serial_number'])->setMerchantID($settings['id']);
+  $httpClient = new \Http\Adapter\Guzzle6\Client(new \GuzzleHttp\Client());
+  $client = new \zaporylie\Vipps\Client($settings['id'], [
+    'http_client' => $httpClient,
+    'environment' => $settings['environment'],
+  ]);
+  return new \zaporylie\Vipps\Vipps($client);
 }
 
 /**
