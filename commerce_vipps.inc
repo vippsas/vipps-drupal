@@ -43,14 +43,6 @@ function commerce_vipps_settings_form($settings = array()) {
     '#description' => t('Merchant Token'),
     '#default_value' => $settings['token'],
   );
-  $form['cert'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Certificate'),
-    '#required' => TRUE,
-    '#description' => t('Absolute path to certificate file. Certificate should not be public! If your certificate requires password add it after colon char, ex. vipps.p12:password'),
-    '#default_value' => $settings['cert'],
-    '#element_validate' => array('commerce_vipps_element_validate_file'),
-  );
   $form['mobile'] = array(
     '#type' => 'select',
     '#title' => t('Mobile phone value'),
@@ -412,7 +404,7 @@ function _commerce_vipps_capture_transaction($transaction, $amount = 0, $skip_sa
  *   (optional) Credit amount.
  * @param bool $skip_save
  *   (optional) Skip transaction save.
- * 
+ *
  * @throws Exception
  */
 function _commerce_vipps_credit_transaction($transaction, $amount = 0, $skip_save = FALSE) {
@@ -559,7 +551,6 @@ function _commerce_vipps_default_settings() {
     'serial_number' => '',
     'id' => '',
     'token' => '',
-    'cert' => '',
     'mobile' => NULL,
     'help' => t('Open VIPPS app on your phone and confirm payment.'),
   );
