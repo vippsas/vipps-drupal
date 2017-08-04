@@ -22,6 +22,20 @@ function commerce_vipps_settings_form($settings = array()) {
       'live' => t('Live'),
     ),
   );
+  $form['id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('ID'),
+    '#required' => TRUE,
+    '#description' => t('Client ID'),
+    '#default_value' => $settings['id'],
+  );
+  $form['secret'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Secret'),
+    '#required' => TRUE,
+    '#description' => t('Client Secret'),
+    '#default_value' => $settings['secret'],
+  );
   $form['serial_number'] = array(
     '#type' => 'textfield',
     '#title' => t('Serial Number'),
@@ -29,19 +43,17 @@ function commerce_vipps_settings_form($settings = array()) {
     '#description' => t('Merchant Serial Number'),
     '#default_value' => $settings['serial_number'],
   );
-  $form['id'] = array(
+  $form['subscription_key_authorization'] = array(
     '#type' => 'textfield',
-    '#title' => t('ID'),
+    '#title' => t('Subscription Key - Authorization'),
     '#required' => TRUE,
-    '#description' => t('Merchant ID'),
-    '#default_value' => $settings['id'],
+    '#default_value' => $settings['subscription_key_authorization'],
   );
-  $form['token'] = array(
+  $form['subscription_key_payment'] = array(
     '#type' => 'textfield',
-    '#title' => t('Token'),
+    '#title' => t('Subscription Key - Payment'),
     '#required' => TRUE,
-    '#description' => t('Merchant Token'),
-    '#default_value' => $settings['token'],
+    '#default_value' => $settings['subscription_key_payment'],
   );
   $form['mobile'] = array(
     '#type' => 'select',
@@ -511,8 +523,14 @@ function _commerce_vipps_get_client($settings) {
   $client = new \zaporylie\Vipps\Client($settings['id'], [
     'http_client' => $httpClient,
     'environment' => $settings['environment'],
+    'token_storage' => new CommerceVippsCacheTokenStorageClass(),
   ]);
-  return new \zaporylie\Vipps\Vipps($client);
+  $vipps = new \zaporylie\Vipps\Vipps($client);
+  if (!$client->getTokenStorage()->has()) {
+    $token = $vipps->authorization($settings['subscription_key_authorization'])->getToken($settings['secret']);
+    $client->getTokenStorage()->set($token);
+  }
+  return $vipps;
 }
 
 /**
@@ -525,7 +543,9 @@ function _commerce_vipps_default_settings() {
     'environment' => 'test',
     'serial_number' => '',
     'id' => '',
-    'token' => '',
+    'secret' => '',
+    'subscription_key_authorization' => '',
+    'subscription_key_payment' => '',
     'mobile' => NULL,
     'help' => t('Open VIPPS app on your phone and confirm payment.'),
   );
