@@ -101,7 +101,7 @@ function commerce_vipps_redirect_form($form, &$form_state, $order, $payment_meth
   }
 
   // Payment has been processed already.
-  if ($transaction->remote_status !== COMMERCE_VIPPS_REMOTE_INITIATE) {
+  if ($transaction->remote_status !== \zaporylie\Vipps\Model\OrderStatus::INITIATE) {
     drupal_goto('checkout/' . $order->order_id . '/payment/return/' . $payment_redirect_key);
   }
 
@@ -243,7 +243,7 @@ function _commerce_vipps_get_current_transaction($order, $payment_method) {
     );
 
     // Save transaction.
-    $transaction->remote_status = COMMERCE_VIPPS_REMOTE_INITIATE;
+    $transaction->remote_status = \zaporylie\Vipps\Model\OrderStatus::INITIATE;
     $transaction->payload = $payload;
     commerce_payment_transaction_save($transaction);
   }
@@ -307,7 +307,7 @@ function commerce_vipps_redirect_form_validate($order, $payment_method) {
     // Assuming data was already synced and status is reserved we can let user
     // pass (optimistic scenario).
     // @todo: Check exception type in case of networking issues.
-    if ($e->getPrevious() instanceof \Http\Client\Exception\NetworkException && $transaction->remote_status !== COMMERCE_VIPPS_REMOTE_RESERVE) {
+    if ($e->getPrevious() instanceof \Http\Client\Exception\NetworkException && $transaction->remote_status !== \zaporylie\Vipps\Model\OrderStatus::RESERVE) {
       // Delay.
       sleep(10);
       // Try again.
@@ -320,13 +320,13 @@ function commerce_vipps_redirect_form_validate($order, $payment_method) {
   }
 
   // Check if remote status is "Reserved".
-  if ($transaction->remote_status === COMMERCE_VIPPS_REMOTE_RESERVE) {
+  if ($transaction->remote_status === \zaporylie\Vipps\Model\OrderStatus::RESERVE) {
     _commerce_vipps_set_local_status($transaction);
     $transaction->message = 'Reserved';
     commerce_payment_transaction_save($transaction);
     return TRUE;
   }
-  elseif (in_array($transaction->remote_status, array(COMMERCE_VIPPS_REMOTE_INITIATE, COMMERCE_VIPPS_REMOTE_REGISTER))) {
+  elseif (in_array($transaction->remote_status, array(\zaporylie\Vipps\Model\OrderStatus::INITIATE, \zaporylie\Vipps\Model\OrderStatus::REGISTER))) {
     // Can't be right, try again.
     watchdog('commerce_vipps', 'Order is looped in status @remote_status', array('@remote_status' => $transaction->remote_status), WATCHDOG_ERROR);
     // Delay.
@@ -475,18 +475,18 @@ function _commerce_vipps_get_status_transaction($transaction) {
  */
 function _commerce_vipps_set_local_status($transaction) {
   switch ($transaction->remote_status) {
-    case COMMERCE_VIPPS_REMOTE_VOID:
-    case COMMERCE_VIPPS_REMOTE_CANCEL:
-    case COMMERCE_VIPPS_REMOTE_FAILED:
+    case \zaporylie\Vipps\Model\OrderStatus::VOID:
+    case \zaporylie\Vipps\Model\OrderStatus::CANCEL:
+    case \zaporylie\Vipps\Model\OrderStatus::FAILED:
       $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
       break;
 
-    case COMMERCE_VIPPS_REMOTE_INITIATE:
-    case COMMERCE_VIPPS_REMOTE_REGISTER:
+    case \zaporylie\Vipps\Model\OrderStatus::INITIATE:
+    case \zaporylie\Vipps\Model\OrderStatus::REGISTER:
       $transaction->status = COMMERCE_VIPPS_STATUS_REGISTERED;
       break;
 
-    case COMMERCE_VIPPS_REMOTE_RESERVE:
+    case \zaporylie\Vipps\Model\OrderStatus::RESERVE:
       if ($transaction->status == COMMERCE_VIPPS_STATUS_REGISTERED) {
         $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
       }
@@ -660,9 +660,9 @@ function _commerce_vipps_process($limit = 200) {
       _commerce_vipps_get_status_transaction($transaction);
 
       switch ($transaction->remote_status) {
-        case COMMERCE_VIPPS_REMOTE_VOID:
-        case COMMERCE_VIPPS_REMOTE_CANCEL:
-        case COMMERCE_VIPPS_REMOTE_FAILED:
+        case \zaporylie\Vipps\Model\OrderStatus::VOID:
+        case \zaporylie\Vipps\Model\OrderStatus::CANCEL:
+        case \zaporylie\Vipps\Model\OrderStatus::FAILED:
           $transaction->message = 'Transaction cancelled: @remote_status';
           $transaction->message_variables = array('@remote_status' => $transaction->remote_status);
           _commerce_vipps_set_local_status($transaction);
@@ -672,7 +672,7 @@ function _commerce_vipps_process($limit = 200) {
           watchdog('commerce_vipps', 'Payment @transaction_id cancelled due to remote status @reason by Drush.', array('@transaction_id' => $transaction->transaction_id, '@reason' => $transaction->remote_status), WATCHDOG_WARNING);
           break;
 
-        case COMMERCE_VIPPS_REMOTE_INITIATE:
+        case \zaporylie\Vipps\Model\OrderStatus::INITIATE:
           $transaction->message = 'Time out';
           $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
           commerce_payment_transaction_save($transaction);
@@ -681,7 +681,7 @@ function _commerce_vipps_process($limit = 200) {
           watchdog('commerce_vipps', 'Payment @transaction_id cancelled due to @reason by Drush.', array('@transaction_id' => $transaction->transaction_id, '@reason' => 'timeout'), WATCHDOG_WARNING);
           break;
 
-        case COMMERCE_VIPPS_REMOTE_RESERVE:
+        case \zaporylie\Vipps\Model\OrderStatus::RESERVE:
           _commerce_vipps_get_details_transaction($transaction);
           _commerce_vipps_set_local_status($transaction);
           $transaction->message = 'Reserved';
