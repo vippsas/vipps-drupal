@@ -5,7 +5,7 @@
  */
 class CommerceVippsCacheTokenStorageClass implements \zaporylie\Vipps\Authentication\TokenStorageInterface {
 
-  const CACHE_BIN = self::CACHE_BIN;
+  const CACHE_BIN = 'commerce_vipps_authorization_token';
 
   /**
    * {@inheritdoc}
@@ -63,10 +63,13 @@ class CommerceVippsCacheTokenStorageClass implements \zaporylie\Vipps\Authentica
    */
   private function getTokenFromCache() {
     $static_cache =& drupal_static(self::CACHE_BIN);
-    if (isset($static_cache['object']) instanceof \zaporylie\Vipps\Model\Authorization\ResponseGetToken) {
+    if (isset($static_cache['object']) && $static_cache['object'] instanceof \zaporylie\Vipps\Model\Authorization\ResponseGetToken) {
       return $static_cache['object'];
     }
     $db_cache = cache_get(self::CACHE_BIN);
+    if (!isset($db_cache->data)) {
+      return FALSE;
+    }
     // Save on static cache for future reference.
     $static_cache['object'] = $db_cache->data;
     return $db_cache->data;

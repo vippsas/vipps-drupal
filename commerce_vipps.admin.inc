@@ -94,7 +94,7 @@ function commerce_vipps_admin_capture($form, &$form_state, $transaction, $order)
   $form['amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Amount'),
-    '#default_value' => commerce_currency_amount_to_decimal($transaction->payload->transactionSummary->remainingAmountToCapture, $transaction->currency_code),
+    '#default_value' => commerce_currency_amount_to_decimal($transaction->payload->getTransactionSummary()->getRemainingAmountToCapture(), $transaction->currency_code),
     '#element_validate' => array('element_validate_number'),
   );
   return confirm_form($form, t('Are you sure you want to %action transaction %transaction.', array('%action' => strtolower(t('Capture')), '%transaction' => $transaction->transaction_id)), $uri['path']);
@@ -136,7 +136,7 @@ function commerce_vipps_admin_credit($form, &$form_state, $transaction, $order) 
   $form['amount'] = array(
     '#type' => 'textfield',
     '#title' => t('Amount'),
-    '#default_value' => commerce_currency_amount_to_decimal($transaction->payload->transactionSummary->remainingAmountToRefund, $transaction->currency_code),
+    '#default_value' => commerce_currency_amount_to_decimal($transaction->payload->getTransactionSummary()->getRemainingAmountToRefund(), $transaction->currency_code),
     '#element_validate' => array('element_validate_number'),
   );
   return confirm_form($form, t('Are you sure you want to %action transaction %transaction.', array('%action' => strtolower(t('Credit')), '%transaction' => $transaction->transaction_id)), $uri['path']);

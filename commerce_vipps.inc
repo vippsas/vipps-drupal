@@ -233,29 +233,28 @@ function _commerce_vipps_get_current_transaction($order, $payment_method) {
     }
 
     $vipps = _commerce_vipps_get_client($settings);
-    $payment = $vipps->payments();
-    $payment
-      ->setOrderID($transaction->remote_id)
-      ->create(
-        (int) $mobile,
-        (int) $transaction->amount,
-        t('Payment for order @order_id', array('@order_id' => $wrapper->getIdentifier())),
-        url('commerce_vipps/' . $transaction->transaction_id . '/transaction/' . $order->data['payment_redirect_key'], array('absolute' => TRUE, 'https' => TRUE))
-      );
+    $payment = $vipps->payment($settings['subscription_key_payment'], $settings['serial_number']);
+    $payload = $payment->initiatePayment(
+      $transaction->remote_id,
+      (int) $mobile,
+      (int) $transaction->amount,
+      t('Payment for order @order_id', array('@order_id' => $wrapper->getIdentifier())),
+      url('commerce_vipps/' . $transaction->transaction_id . '/transaction/' . $order->data['payment_redirect_key'], array('absolute' => TRUE, 'https' => TRUE))
+    );
 
     // Save transaction.
     $transaction->remote_status = COMMERCE_VIPPS_REMOTE_INITIATE;
-    $transaction->payload = $payment->getLastResponse();
+    $transaction->payload = $payload;
     commerce_payment_transaction_save($transaction);
   }
   catch (Exception $e) {
 
     // Some of the errors should be displayed to customer.
-    if ($e instanceof \Vipps\Exceptions\VippsException && $e->getErrorCode() == 81) {
+    if ($e instanceof \zaporylie\Vipps\Exceptions\VippsException && $e->getError() instanceof \zaporylie\Vipps\Model\Error\ErrorInterface && $e->getError()->getCode() == 81) {
       drupal_set_message(t('Unable to process payment: @message', array('@message' => t('User not registered with VIPPS'))), 'error');
     }
     // User's app is unsupported.
-    elseif ($e instanceof \Vipps\Exceptions\VippsException && $e->getErrorCode() == 82) {
+    elseif ($e instanceof \zaporylie\Vipps\Exceptions\VippsException && $e->getError() instanceof \zaporylie\Vipps\Model\Error\ErrorInterface && $e->getError()->getCode() == 82) {
       drupal_set_message(t('Unable to process payment: @message', array('@message' => t('User App Version is not supported'))), 'error');
     }
     // Some of the errors should be displayed to customer.
@@ -302,12 +301,13 @@ function commerce_vipps_redirect_form_validate($order, $payment_method) {
   try {
     _commerce_vipps_get_status_transaction($transaction);
   }
-  catch (\Vipps\Exceptions\ConnectionException $e) {
+  catch (\zaporylie\Vipps\Exceptions\VippsException $e) {
     watchdog_exception('commerce_vipps', $e);
     watchdog('commerce_vipps', 'Networking issue while getting transaction status: @message', array('@message_id' => $e->getMessage()), WATCHDOG_ERROR);
     // Assuming data was already synced and status is reserved we can let user
     // pass (optimistic scenario).
-    if ($transaction->remote_status !== COMMERCE_VIPPS_REMOTE_RESERVE) {
+    // @todo: Check exception type in case of networking issues.
+    if ($e->getPrevious() instanceof \Http\Client\Exception\NetworkException && $transaction->remote_status !== COMMERCE_VIPPS_REMOTE_RESERVE) {
       // Delay.
       sleep(10);
       // Try again.
@@ -362,8 +362,9 @@ function _commerce_vipps_cancel_transaction($transaction, $skip_save = FALSE) {
   global $user;
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
-  $payment = _commerce_vipps_get_client($settings)->payments()->setOrderID($transaction->remote_id);
-  $payment->cancel(t('Canceled by @user', array('@user' => $user->name)));
+  $payment = _commerce_vipps_get_client($settings)
+    ->payment($settings['subscription_key_payment'], $settings['serial_number'])
+    ->cancelPayment($transaction->remote_id, t('Canceled by @user', array('@user' => $user->name)));
   $transaction->message = 'Canceled';
   $transaction->message_variables = array();
   _commerce_vipps_get_status_transaction($transaction);
@@ -394,14 +395,15 @@ function _commerce_vipps_capture_transaction($transaction, $amount = 0, $skip_sa
   }
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
-  $payment = _commerce_vipps_get_client($settings)->payments()->setOrderID($transaction->remote_id);
-  $payment->capture(t('Captured by @user', array('@user' => $user->name)), $amount);
+  $payment = _commerce_vipps_get_client($settings)
+    ->payment($settings['subscription_key_payment'], $settings['serial_number'])
+    ->capturePayment($transaction->remote_id, t('Captured by @user', array('@user' => $user->name)), $amount);
   $transaction->message = 'Captured @amount';
   $transaction->message_variables = array('@amount' => $amount);
   _commerce_vipps_get_status_transaction($transaction);
   _commerce_vipps_get_details_transaction($transaction);
   $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-  $transaction->amount = $transaction->payload->transactionSummary->capturedAmount - $transaction->payload->transactionSummary->refundedAmount;
+  $transaction->amount = $transaction->payload->getTransactionSummary()->getCapturedAmount() - $transaction->payload->getTransactionSummary()->getRefundedAmount();
   if (!$skip_save) {
     commerce_payment_transaction_save($transaction);
   }
@@ -426,13 +428,14 @@ function _commerce_vipps_credit_transaction($transaction, $amount = 0, $skip_sav
   }
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
-  $payment = _commerce_vipps_get_client($settings)->payments()->setOrderID($transaction->remote_id);
-  $payment->refund(t('Credited by @user', array('@user' => $user->name)), $amount);
+  $payment = _commerce_vipps_get_client($settings)
+    ->payment($settings['subscription_key_payment'], $settings['serial_number'])
+    ->refundPayment($transaction->remote_id, t('Credited by @user', array('@user' => $user->name)), $amount);
   $transaction->message = 'Credited @amount';
   $transaction->message_variables = array('@amount' => $amount);
   _commerce_vipps_get_status_transaction($transaction);
   _commerce_vipps_get_details_transaction($transaction);
-  $transaction->amount = $transaction->payload->transactionSummary->capturedAmount - $transaction->payload->transactionSummary->refundedAmount;
+  $transaction->amount = $transaction->payload->getTransactionSummary()->getCapturedAmount() - $transaction->payload->getTransactionSummary()->getRefundedAmount();
   _commerce_vipps_set_local_status($transaction);
   if (!$skip_save) {
     commerce_payment_transaction_save($transaction);
@@ -445,18 +448,21 @@ function _commerce_vipps_credit_transaction($transaction, $amount = 0, $skip_sav
  * @param object $transaction
  *   Commerce Payment Transaction.
  *
- * @return object
+ * @return \zaporylie\Vipps\Model\Payment\ResponseGetOrderStatus
  *   Payment status.
  *
  * @throws Exception
+ *
+ * @todo: Check what does it affect.
  */
 function _commerce_vipps_get_status_transaction($transaction) {
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   $vipps = _commerce_vipps_get_client($settings);
-  $payment = $vipps->payments();
-  $status = $payment->setOrderID($transaction->remote_id)->getStatus();
-  $transaction->remote_status = $status->transactionInfo->status;
+  $status = $vipps
+    ->payment($settings['subscription_key_payment'], $settings['serial_number'])
+    ->getOrderStatus($transaction->remote_id);
+  $transaction->remote_status = $status->getTransactionInfo()->getStatus();
 
   return $status;
 }
@@ -484,7 +490,7 @@ function _commerce_vipps_set_local_status($transaction) {
       if ($transaction->status == COMMERCE_VIPPS_STATUS_REGISTERED) {
         $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
       }
-      elseif ($transaction->payload->transactionSummary->remainingAmountToRefund == 0 && $transaction->payload->transactionSummary->remainingAmountToCapture == 0) {
+      elseif ($transaction->payload instanceof \zaporylie\Vipps\Model\Payment\ResponseGetPaymentDetails && $transaction->payload->getTransactionSummary()->getRemainingAmountToRefund() == 0 && $transaction->payload->getTransactionSummary()->getRemainingAmountToCapture() == 0) {
         $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
       }
       break;
@@ -497,17 +503,19 @@ function _commerce_vipps_set_local_status($transaction) {
  * @param object $transaction
  *   Commerce Payment Transaction.
  *
- * @return object
+ * @return \zaporylie\Vipps\Model\Payment\ResponseGetPaymentDetails
  *   Payment details.
  *
  * @throws Exception
+ *
+ * @todo: Check what's affected by new return type.
  */
 function _commerce_vipps_get_details_transaction($transaction) {
   $payment_method = commerce_payment_method_instance_load($transaction->instance_id);
   $settings = $payment_method['settings'] + _commerce_vipps_default_settings();
   $vipps = _commerce_vipps_get_client($settings);
-  $payment = $vipps->payments();
-  $details = $payment->setOrderID($transaction->remote_id)->getDetails();
+  $payment = $vipps->payment($settings['subscription_key_payment'], $settings['serial_number']);
+  $details = $payment->getPaymentDetails($transaction->remote_id);
   $transaction->payload = $details;
   return $details;
 }
