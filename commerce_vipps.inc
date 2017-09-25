@@ -530,7 +530,7 @@ function _commerce_vipps_get_client($settings) {
   $httpClient = new \Http\Adapter\Guzzle6\Client(new \GuzzleHttp\Client());
   $client = new \zaporylie\Vipps\Client($settings['id'], [
     'http_client' => $httpClient,
-    'environment' => $settings['environment'],
+    'endpoint' => $settings['environment'],
     'token_storage' => new CommerceVippsCacheTokenStorageClass(),
   ]);
   $vipps = new \zaporylie\Vipps\Vipps($client);
