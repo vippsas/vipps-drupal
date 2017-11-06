@@ -34,7 +34,7 @@ class CommerceVippsCacheTokenStorageClass implements \zaporylie\Vipps\Authentica
     }
 
     if ($this->getTokenFromCache()->getExpiresOn()->getTimestamp() < (new \DateTime())->getTimestamp()) {
-      $this->delete();
+      $this->clear();
       return FALSE;
     }
 
@@ -45,7 +45,7 @@ class CommerceVippsCacheTokenStorageClass implements \zaporylie\Vipps\Authentica
    * {@inheritdoc}
    */
   public function clear() {
-    cache_clear_all(self::CACHE_BIN);
+    cache_clear_all(self::CACHE_BIN, 'cache');
     drupal_static_reset(self::CACHE_BIN);
     return $this;
   }
@@ -54,7 +54,7 @@ class CommerceVippsCacheTokenStorageClass implements \zaporylie\Vipps\Authentica
    * {@inheritdoc}
    */
   public function delete() {
-    $this->delete();
+    $this->clear();
     return $this;
   }
 
