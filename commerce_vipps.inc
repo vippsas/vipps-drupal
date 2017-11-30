@@ -478,6 +478,7 @@ function _commerce_vipps_set_local_status($transaction) {
     case \zaporylie\Vipps\Model\OrderStatus::VOID:
     case \zaporylie\Vipps\Model\OrderStatus::CANCEL:
     case \zaporylie\Vipps\Model\OrderStatus::FAILED:
+    case \zaporylie\Vipps\Model\OrderStatus::REJECTED:
       $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
       break;
 
@@ -663,6 +664,7 @@ function _commerce_vipps_process($limit = 200) {
         case \zaporylie\Vipps\Model\OrderStatus::VOID:
         case \zaporylie\Vipps\Model\OrderStatus::CANCEL:
         case \zaporylie\Vipps\Model\OrderStatus::FAILED:
+        case \zaporylie\Vipps\Model\OrderStatus::REJECTED:
           $transaction->message = 'Transaction cancelled: @remote_status';
           $transaction->message_variables = array('@remote_status' => $transaction->remote_status);
           _commerce_vipps_set_local_status($transaction);
