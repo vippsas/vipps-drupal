@@ -1,0 +1,11 @@
+{{ attach_library('commerce_vipps/commerce_vipps.payment') }}
+<div id="vipps-overlay">
+    <div class="vipps-page-wrapper" data-gateway="{{ gateway_instance }}" data-order-id="{{ order_id }}" data-payment-id="{{ payment_id }}">
+        <div class="vipps-content-wrapper">
+            <img class="commerce-vipps-logo" src="/{{ module_path }}/assets/logo.png" />
+            {{ message }}
+            <p><img class="commerce-vipps-spinner" src="/{{ module_path }}/assets/spinner.gif" alt=""></p>
+            <h2 class="text-center">{{ phone }}</h2>
+        </div>
+    </div>
+</div>

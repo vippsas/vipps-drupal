@@ -1,0 +1,38 @@
+vipps_checkout:
+  id: vipps_checkout
+  group: commerce_payment
+  label: 'Default'
+  states:
+    new:
+      label: 'New'
+    initiate:
+      label: 'Initiated'
+    pending:
+      label: 'Pending'
+    complete:
+      label: 'Completed'
+    refund:
+      label: 'Refunded'
+    failed:
+      label: 'Failed'
+  transitions:
+    authorize:
+      label: 'Initiate payment'
+      from: [new]
+      to: initiate
+    fail:
+      label: 'Failed payment'
+      from: [new, initiate]
+      to: failed
+    expire:
+      label: 'Expire payment'
+      from: [authorization]
+      to: authorization_expired
+    capture:
+      label: 'Capture payment'
+      from: [pending]
+      to: complete
+    refund:
+      label: 'Refund payment'
+      from: [complete, pending]
+      to: refund

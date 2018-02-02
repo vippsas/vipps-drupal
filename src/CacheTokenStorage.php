@@ -1,9 +1,14 @@
 <?php
 
+namespace Drupal\commerce_vipps;
+
+use zaporylie\Vipps\Authentication\TokenStorageInterface;
+use zaporylie\Vipps\Model\Authorization\ResponseGetToken;
+
 /**
- * Class CommerceVippsCacheTokenStorageClass
+ * Class CacheTokenStorage.
  */
-class CommerceVippsCacheTokenStorageClass implements \zaporylie\Vipps\Authentication\TokenStorageInterface {
+class CacheTokenStorage implements TokenStorageInterface {
 
   const CACHE_BIN = 'commerce_vipps_authorization_token';
 
@@ -12,7 +17,7 @@ class CommerceVippsCacheTokenStorageClass implements \zaporylie\Vipps\Authentica
    */
   public function get() {
     if (!$this->has()) {
-      throw new InvalidArgumentException('Missing Token');
+      throw new \InvalidArgumentException('Missing Token');
     }
     return $this->getTokenFromCache();
   }
@@ -20,8 +25,8 @@ class CommerceVippsCacheTokenStorageClass implements \zaporylie\Vipps\Authentica
   /**
    * {@inheritdoc}
    */
-  public function set(\zaporylie\Vipps\Model\Authorization\ResponseGetToken $token) {
-    cache_set(self::CACHE_BIN, $token, 'cache', $token->getExpiresOn()->getTimestamp());
+  public function set(ResponseGetToken $token) {
+    \Drupal::cache()->set(self::CACHE_BIN, $token, $token->getExpiresOn()->getTimestamp());
     return $this;
   }
 
@@ -29,7 +34,7 @@ class CommerceVippsCacheTokenStorageClass implements \zaporylie\Vipps\Authentica
    * {@inheritdoc}
    */
   public function has() {
-    if (!($this->getTokenFromCache() instanceof \zaporylie\Vipps\Model\Authorization\ResponseGetToken)) {
+    if (!($this->getTokenFromCache() instanceof ResponseGetToken)) {
       return FALSE;
     }
 
@@ -45,7 +50,8 @@ class CommerceVippsCacheTokenStorageClass implements \zaporylie\Vipps\Authentica
    * {@inheritdoc}
    */
   public function clear() {
-    cache_clear_all(self::CACHE_BIN, 'cache');
+
+    \Drupal::cache()->invalidate(self::CACHE_BIN);
     drupal_static_reset(self::CACHE_BIN);
     return $this;
   }
@@ -59,14 +65,17 @@ class CommerceVippsCacheTokenStorageClass implements \zaporylie\Vipps\Authentica
   }
 
   /**
+   * Get token from cache.
+   *
    * @return mixed
+   *   False if none, array if found.
    */
   private function getTokenFromCache() {
     $static_cache =& drupal_static(self::CACHE_BIN);
-    if (isset($static_cache['object']) && $static_cache['object'] instanceof \zaporylie\Vipps\Model\Authorization\ResponseGetToken) {
+    if (isset($static_cache['object']) && $static_cache['object'] instanceof ResponseGetToken) {
       return $static_cache['object'];
     }
-    $db_cache = cache_get(self::CACHE_BIN);
+    $db_cache = \Drupal::cache()->get(self::CACHE_BIN);
     if (!isset($db_cache->data)) {
       return FALSE;
     }
@@ -74,4 +83,5 @@ class CommerceVippsCacheTokenStorageClass implements \zaporylie\Vipps\Authentica
     $static_cache['object'] = $db_cache->data;
     return $db_cache->data;
   }
+
 }

@@ -1,0 +1,9 @@
+commerce_vipps.payment:
+  js:
+    assets/commerce_vipps.js: {}
+  css:
+    theme:
+      assets/commerce_vipps.css: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
