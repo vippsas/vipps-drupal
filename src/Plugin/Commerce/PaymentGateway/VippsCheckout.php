@@ -28,7 +28,7 @@ use Drupal\commerce_price\Price;
  * @CommercePaymentGateway(
  *   id = "vipps_checkout",
  *   label = "Vipps Checkout",
- *   display_label = "Vipps Checkout",
+ *   display_label = "Vipps",
  *    forms = {
  *     "offsite-payment" = "Drupal\commerce_vipps\PluginForm\OffsiteRedirect\VippsCheckoutForm",
  *   },
