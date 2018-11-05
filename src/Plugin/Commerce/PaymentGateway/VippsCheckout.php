@@ -341,7 +341,7 @@ class VippsCheckout extends OffsitePaymentGatewayBase implements SupportsAuthori
       throw new PaymentGatewayException("Per now, VIPPS only supports capturing the entire amount. You will be able to do part refunds later.");
     }
 
-    $amount = $this->toMinorUnits($amount);
+    $amount = (string) $amount->multiply(100)->getNumber();
     try {
       // First, attempt to capture amount.
       $settings = $payment->getPaymentGateway()->getPluginConfiguration();
@@ -413,8 +413,7 @@ class VippsCheckout extends OffsitePaymentGatewayBase implements SupportsAuthori
     parent::assertRefundAmount($payment, $amount);
 
     // Fetch a value that vipps understands.
-    $amount_int = (string) $this->toMinorUnits($amount);
-
+    $amount_int = (string) $amount->multiply(100)->getNumber();
     // Call the service.
     try {
       $account_name = \Drupal::currentUser()->getAccountName();
