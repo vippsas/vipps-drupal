@@ -346,9 +346,10 @@ class VippsCheckout extends OffsitePaymentGatewayBase implements SupportsAuthori
       // First, attempt to capture amount.
       $settings = $payment->getPaymentGateway()->getPluginConfiguration();
       $string = t('Captured by @user', ['@user' => $account_name])->__toString();
-      $request_capture = $this->vipps->getClient($settings)
-        ->payment($settings['subscription_key_payment'], $settings['serial_number'])
-        ->capturePayment($payment->getRemoteId(), $string, $amount);
+      $vipps = $this->vipps->getClient($settings, $settings['mode']);
+      // Initiate vipps payment. Generate things we need.
+      $vipps_payment = $vipps->payment($settings['subscription_key_payment'], $settings['serial_number']);
+      $request_capture = $vipps_payment->capturePayment($payment->getRemoteId(), $string, $amount);
     }
     catch (\Exception $e) {
       $text = t('Unable to @action transaction: @message', ['@action' => strtolower(t('Capture')), '@message' => $e->getMessage()]);
@@ -381,9 +382,10 @@ class VippsCheckout extends OffsitePaymentGatewayBase implements SupportsAuthori
     $settings = $payment->getPaymentGateway()->getPluginConfiguration();
     $string = t('Canceled by @user', ['@user' => $account_name])->__toString();
     try {
-      $request_void = $this->vipps->getClient($settings)
-        ->payment($settings['subscription_key_payment'], $settings['serial_number'])
-        ->cancelPayment($payment->getRemoteId(), $string);
+      $vipps = $this->vipps->getClient($settings, $settings['mode']);
+      // Initiate vipps payment. Generate things we need.
+      $vipps_payment = $vipps->payment($settings['subscription_key_payment'], $settings['serial_number']);
+      $request_void = $vipps_payment->cancelPayment($payment->getRemoteId(), $string);
     }
     catch (\Exception $e) {
       $text = t('Unable to @action transaction: @message', ['@action' => strtolower(t('Cancel')), '@message' => $e->getMessage()]);
@@ -419,9 +421,11 @@ class VippsCheckout extends OffsitePaymentGatewayBase implements SupportsAuthori
       $account_name = \Drupal::currentUser()->getAccountName();
       $settings = $payment->getPaymentGateway()->getPluginConfiguration();
       $string = t('Credited by @user', ['@user' => $account_name])->__toString();
-      $request_capture = $this->vipps->getClient($settings)
-        ->payment($settings['subscription_key_payment'], $settings['serial_number'])
-        ->refundPayment($payment->getRemoteId(), $string, $amount_int);
+
+      $vipps = $this->vipps->getClient($settings, $settings['mode']);
+      // Initiate vipps payment. Generate things we need.
+      $vipps_payment = $vipps->payment($settings['subscription_key_payment'], $settings['serial_number']);
+      $request_refund = $vipps_payment->refundPayment($payment->getRemoteId(), $string, $amount_int);
     }
     catch (\Exception $e) {
       // Get & set the transaction details.

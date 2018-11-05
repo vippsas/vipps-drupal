@@ -4,7 +4,6 @@ namespace Drupal\commerce_vipps;
 
 use zaporylie\Vipps\Model\Payment\ResponseGetPaymentDetails;
 use zaporylie\Vipps\Model\OrderStatus;
-use zaporylie\Vipps\Client;
 use Drupal\commerce_payment\Entity\Payment;
 use Drupal\commerce_payment\Exception\PaymentGatewayException;
 use Drupal\commerce_order\Entity\OrderInterface;
@@ -110,6 +109,8 @@ class VippsManager {
    *
    * @param mixed $settings
    *   The settings array.
+   * @param string $environment
+   *   The environment.
    *
    * @return \zaporylie\Vipps\VippsInterface
    *   The vipps client.
@@ -167,7 +168,7 @@ class VippsManager {
    *
    * @throws \Exception
    */
-  public function getPaymentStatus($payment) {
+  public function getPaymentStatus(Payment $payment) {
     $order = $payment->getOrder();
     $settings = $order->payment_gateway->entity->get('configuration');
     $mode = $settings['mode'];
@@ -193,7 +194,7 @@ class VippsManager {
    *
    * @todo: Check what's affected by new return type.
    */
-  public function getTransactionDetails($payment) {
+  public function getTransactionDetails(Payment $payment) {
     $order = $payment->getOrder();
     $settings = $order->payment_gateway->entity->get('configuration');
     $mode = $settings['mode'];
@@ -210,7 +211,7 @@ class VippsManager {
    * @param \Drupal\commerce_payment\Entity\Payment $payment
    *   Commerce Payment $payment.
    */
-  public function setLocalPaymentStatus($payment) {
+  public function setLocalPaymentStatus(Payment $payment) {
     switch ($payment->getRemoteState()) {
       case OrderStatus::VOID:
       case OrderStatus::CANCEL:
@@ -241,7 +242,7 @@ class VippsManager {
    *
    * @param \Exception $e
    *   The exception.
-   * @param \Drupal\commerce_order\Entity\Order $order
+   * @param \Drupal\commerce_order\Entity\OrderInterface $order
    *   The order.
    */
   public function throwCheckoutExceptions(\Exception $e, OrderInterface $order) {
