@@ -38,6 +38,7 @@ function commerce_vipps_preprocess_commerce_vipps_payment_page(&$variables) {
   /** @var \Drupal\commerce_order\Entity\Order $order */
   $order = \Drupal::routeMatch()->getParameter('commerce_order');
   $variables['gateway_instance'] = $order->payment_gateway->entity->get('id');
+  $variables['cancel_url'] = sprintf('/checkout/%s/payment/cancel', $order->Id());
   $variables['order_id'] = $order->id();
   $variables['payment_id'] = $order->getData(COMMERCE_VIPPS_CURRENT_TRANSACTION);
   $variables['message'] = $order->payment_gateway->entity->get('configuration')['help'];
