@@ -85,7 +85,7 @@ class VippsManager {
         $payment->getRemoteId(),
         (int) $number,
         (int) round($payment->getAmount()->getNumber(), 2) * 100,
-        t('Payment for order %order_id', ['@order_id' => $order->getOriginalId()])->__toString(),
+        t('Payment for order @order_id', ['@order_id' => $order->Id()])->__toString(),
         $uri
       );
     }
