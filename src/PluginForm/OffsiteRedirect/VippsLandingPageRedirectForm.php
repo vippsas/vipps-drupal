@@ -4,7 +4,10 @@ namespace Drupal\commerce_vipps\PluginForm\OffsiteRedirect;
 
 use Drupal\commerce_payment\Exception\PaymentGatewayException;
 use Drupal\commerce_payment\PluginForm\PaymentOffsiteForm as BasePaymentOffsiteForm;
+use Drupal\commerce_vipps\Resolver\ChainOrderIdResolverInterface;
+use Drupal\commerce_vipps\VippsManager;
 use Drupal\Component\Uuid\Uuid;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -19,7 +22,38 @@ use zaporylie\Vipps\Vipps;
  *
  * Handles the initiation of vipps payments.
  */
-class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm {
+class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements ContainerInjectionInterface {
+
+  /**
+   * @var \Drupal\commerce_vipps\VippsManager
+   */
+  protected $vippsManager;
+
+  /**
+   * @var \Drupal\commerce_vipps\Resolver\ChainOrderIdResolverInterface
+   */
+  protected $chainOrderIdResolver;
+
+  /**
+   * VippsLandingPageRedirectForm constructor.
+   *
+   * @param \Drupal\commerce_vipps\VippsManager $vippsManager
+   * @param \Drupal\commerce_vipps\Resolver\ChainOrderIdResolverInterface $chainOrderIdResolver
+   */
+  public function __construct(VippsManager $vippsManager, ChainOrderIdResolverInterface $chainOrderIdResolver) {
+    $this->vippsManager = $vippsManager;
+    $this->chainOrderIdResolver = $chainOrderIdResolver;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('commerce_vipps.manager'),
+      $container->get('commerce_vipps.chain_order_id_resolver')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -35,7 +69,7 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm {
     $settings = $payment->getPaymentGateway()->getPluginConfiguration();
 
     // Create payment.
-    $payment->setRemoteId(uniqid($settings['prefix']));
+    $payment->setRemoteId($settings['prefix'] . $this->chainOrderIdResolver->resolve());
 
     // Save order.
     $order = $payment->getOrder();
@@ -51,7 +85,7 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm {
     }
 
     try {
-      $url = \Drupal::service('commerce_vipps.manager')
+      $url = $this->vippsManager
         ->getPaymentManager($plugin)
         ->initiatePayment(
           $payment->getRemoteId(),
