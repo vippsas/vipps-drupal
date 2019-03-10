@@ -1,3 +1,4 @@
 services:
-  commerce_vipps.payment_manager:
+  commerce_vipps.manager:
     class: Drupal\commerce_vipps\VippsManager
+    arguments: ['@http_client']
