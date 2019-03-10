@@ -228,7 +228,6 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
     }
 
     $content = $request->getContent();
-    \Drupal::logger('commerce_vipps')->critical('Data: @data', ['@data' => $content]);
 
     $remote_id = $request->attributes->get('remote_id');
     $matching_payments = $payment_storage->loadByProperties(['remote_id' => $remote_id, 'payment_gateway' => $commerce_payment_gateway->id()]);
@@ -252,14 +251,15 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
       case 'SALE_FAILED':
       case 'CANCELLED':
       case 'REJECTED':
-      // @todo: There is no corresponding state in payment workflow but it's
-      // still better to keep the payment with invalid state than delete it
-      // entirely.
-      $matching_payment->setState('failed');
+        // @todo: There is no corresponding state in payment workflow but it's
+        // still better to keep the payment with invalid state than delete it
+        // entirely.
+        $matching_payment->setState('failed');
         $matching_payment->setRemoteState(Xss::filter($content['transactionInfo']['status']));
         break;
 
       default:
+        \Drupal::logger('commerce_vipps')->critical('Data: @data', ['@data' => $content]);
         return new Response('', Response::HTTP_I_AM_A_TEAPOT);
     }
     $matching_payment->save();
