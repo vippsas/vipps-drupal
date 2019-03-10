@@ -23,6 +23,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use zaporylie\Vipps\Exceptions\VippsException;
 use zaporylie\Vipps\Model\OrderStatus;
 use Drupal\commerce_price\Price;
 
@@ -299,6 +300,24 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
       $payment_manager->capturePayment($remote_id,
         $this->t('Captured @amount via webshop',
           ['@amount' => $amount->getNumber()]), $number);
+    }
+    catch (VippsException $exception) {
+      if ($exception->getError()->getCode() == 61) {
+        // Insufficient funds.
+        // Check if order has already been captured and for what amount,
+        foreach ($payment_manager->getPaymentDetails($remote_id)->getTransactionLogHistory() as $item) {
+          if (in_array($item->getOperation(), ['CAPTURE', 'SALE']) && $item->getOperationSuccess()) {
+            $payment->setAmount(new Price($item->getAmount() / 100, $payment->getAmount()->getCurrencyCode()));
+            $payment->setCompletedTime($item->getTimeStamp()->getTimestamp());
+            $payment->setState('completed');
+            $payment->save();
+            // @todo: Sum up all capture transactions - Vipps allow partial
+            // capture.
+            return;
+          }
+        }
+      }
+      throw new DeclineException($exception->getMessage());
     }
     catch (\Exception $exception) {
       throw new DeclineException($exception->getMessage());
