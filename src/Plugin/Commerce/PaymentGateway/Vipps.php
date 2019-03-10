@@ -98,7 +98,7 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
       '#title' => t('Client ID'),
       '#required' => TRUE,
       '#description' => t('Client ID'),
-      '#default_value' => $this->configuration['id'],
+      '#default_value' => $this->configuration['client_id'],
     ];
     $form['subscription_key_authorization'] = [
       '#type' => 'textfield',
