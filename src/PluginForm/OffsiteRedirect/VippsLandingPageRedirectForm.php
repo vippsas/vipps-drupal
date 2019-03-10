@@ -4,18 +4,14 @@ namespace Drupal\commerce_vipps\PluginForm\OffsiteRedirect;
 
 use Drupal\commerce_payment\Exception\PaymentGatewayException;
 use Drupal\commerce_payment\PluginForm\PaymentOffsiteForm as BasePaymentOffsiteForm;
+use Drupal\commerce_vipps\Event\DefaultPhoneNumberEvent;
+use Drupal\commerce_vipps\Event\VippsEvents;
 use Drupal\commerce_vipps\Resolver\ChainOrderIdResolverInterface;
 use Drupal\commerce_vipps\VippsManager;
-use Drupal\Component\Uuid\Uuid;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\commerce_payment\Entity\Payment;
-use zaporylie\Vipps\Client;
-use zaporylie\Vipps\Endpoint;
-use zaporylie\Vipps\Model\OrderStatus;
-use zaporylie\Vipps\Vipps;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Class VippsCheckoutForm.
@@ -35,14 +31,21 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
   protected $chainOrderIdResolver;
 
   /**
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected $eventDispatcher;
+
+  /**
    * VippsLandingPageRedirectForm constructor.
    *
    * @param \Drupal\commerce_vipps\VippsManager $vippsManager
    * @param \Drupal\commerce_vipps\Resolver\ChainOrderIdResolverInterface $chainOrderIdResolver
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    */
-  public function __construct(VippsManager $vippsManager, ChainOrderIdResolverInterface $chainOrderIdResolver) {
+  public function __construct(VippsManager $vippsManager, ChainOrderIdResolverInterface $chainOrderIdResolver, EventDispatcherInterface $eventDispatcher) {
     $this->vippsManager = $vippsManager;
     $this->chainOrderIdResolver = $chainOrderIdResolver;
+    $this->eventDispatcher = $eventDispatcher;
   }
 
   /**
@@ -51,7 +54,8 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('commerce_vipps.manager'),
-      $container->get('commerce_vipps.chain_order_id_resolver')
+      $container->get('commerce_vipps.chain_order_id_resolver'),
+      $container->get('event_dispatcher')
     );
   }
 
@@ -84,6 +88,18 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
       $order_changed = TRUE;
     }
 
+
+    $options = [
+      'authToken' => $order->getData('vipps_auth_key'),
+    ];
+
+    // Get mobile number - defaults to null.
+    $event = new DefaultPhoneNumberEvent($order);
+    $this->eventDispatcher->dispatch(VippsEvents::DEFAULT_PHONE_NUMBER, $event);
+    if ($number = $event->getPhoneNumber()) {
+      $options['mobileNumber'] = $number;
+    }
+
     try {
       $url = $this->vippsManager
         ->getPaymentManager($plugin)
@@ -94,9 +110,7 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
           // Get standard payment notification callback and add
           rtrim($plugin->getNotifyUrl()->toString(), '/') . '/' . $payment->getOrderId(),
           $form['#return_url'],
-          [
-            'authToken' => $order->getData('vipps_auth_key'),
-          ]
+          $options
         )
         ->getURL();
     }
