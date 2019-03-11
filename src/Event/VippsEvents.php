@@ -9,8 +9,8 @@ final class VippsEvents {
    *
    * @Event
    *
-   * @see \Drupal\commerce_vipps\Event\DefaultPhoneNumberEvent
+   * @see \Drupal\commerce_vipps\Event\InitiatePaymentOptionsEvent
    */
-  const DEFAULT_PHONE_NUMBER = 'commerce_vipps.default_phone_number';
+  const INITIATE_PAYMENT_OPTIONS = 'commerce_vipps.initiate_payment_options';
 
 }

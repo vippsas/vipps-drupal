@@ -4,7 +4,7 @@ namespace Drupal\commerce_vipps\PluginForm\OffsiteRedirect;
 
 use Drupal\commerce_payment\Exception\PaymentGatewayException;
 use Drupal\commerce_payment\PluginForm\PaymentOffsiteForm as BasePaymentOffsiteForm;
-use Drupal\commerce_vipps\Event\DefaultPhoneNumberEvent;
+use Drupal\commerce_vipps\Event\InitiatePaymentOptionsEvent;
 use Drupal\commerce_vipps\Event\VippsEvents;
 use Drupal\commerce_vipps\Resolver\ChainOrderIdResolverInterface;
 use Drupal\commerce_vipps\VippsManager;
@@ -88,17 +88,14 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
       $order_changed = TRUE;
     }
 
-
     $options = [
       'authToken' => $order->getData('vipps_auth_key'),
     ];
 
-    // Get mobile number - defaults to null.
-    $event = new DefaultPhoneNumberEvent($order);
-    $this->eventDispatcher->dispatch(VippsEvents::DEFAULT_PHONE_NUMBER, $event);
-    if ($number = $event->getPhoneNumber()) {
-      $options['mobileNumber'] = $number;
-    }
+    // Set options.
+    $event = new InitiatePaymentOptionsEvent($payment, $options);
+    $this->eventDispatcher->dispatch(VippsEvents::INITIATE_PAYMENT_OPTIONS, $event);
+    $options = $event->getOptions();
 
     try {
       $url = $this->vippsManager
