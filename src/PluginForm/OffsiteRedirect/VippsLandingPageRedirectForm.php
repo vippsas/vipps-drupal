@@ -112,7 +112,7 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
         ->getURL();
     }
     catch (\Exception $exception) {
-      throw new PaymentGatewayException();
+      throw new PaymentGatewayException($exception->getMessage());
     }
 
     // If the payment was successfully created at remote host
