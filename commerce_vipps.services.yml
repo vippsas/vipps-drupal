@@ -10,3 +10,27 @@ services:
     class: Drupal\commerce_vipps\Resolver\DefaultOrderIdResolver
     tags:
       - { name: commerce_vipps.order_id_resolver, priority: -100 }
+  commerce_vipps.chain_shipping_methods_resolver:
+    class: Drupal\commerce_vipps\Resolver\ChainShippingMethodsResolver
+    tags:
+      - { name: service_collector, call: addResolver, tag: commerce_vipps.shipping_methods_resolver }
+  commerce_vipps.default_shipping_methods_resolver:
+    class: Drupal\commerce_vipps\Resolver\DefaultShippingMethodsResolver
+    tags:
+      - { name: commerce_vipps.shipping_methods_resolver, priority: -100 }
+  commerce_vipps.commerce_shipping_methods_resolver:
+    class: Drupal\commerce_vipps\Resolver\CommerceShippingMethodsResolver
+    arguments: ['@commerce_shipping.packer_manager', '@entity_type.manager']
+    abstract: true
+    tags:
+      - { name: commerce_vipps.shipping_methods_resolver, priority: -90 }
+  commerce_vipps.event_subscriber:
+    class: Drupal\commerce_vipps\EventSubscriber\CommerceVippsSubscriber
+    tags:
+      - { name: event_subscriber }
+  commerce_vipps.commerce_shipping_subscriber:
+    class: Drupal\commerce_vipps\EventSubscriber\CommerceShippingSubscriber
+    arguments: ['@entity_type.manager', '@commerce_shipping.packer_manager']
+    abstract: true
+    tags:
+      - { name: event_subscriber }

@@ -26,6 +26,7 @@ use Symfony\Component\HttpFoundation\Response;
 use zaporylie\Vipps\Exceptions\VippsException;
 use zaporylie\Vipps\Model\OrderStatus;
 use Drupal\commerce_price\Price;
+use zaporylie\Vipps\Model\Payment\ExpressCheckOutPaymentRequest;
 
 /**
  * Provides the Vipps payment gateway.
@@ -159,8 +160,7 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
     $payment_storage = $this->entityTypeManager->getStorage('commerce_payment');
     $matching_payments = $payment_storage->loadByProperties(['remote_id' => $remote_id, 'order_id' => $order->id()]);
     if (count($matching_payments) !== 1) {
-      // @todo: Log exception.
-      return new Response('', Response::HTTP_FORBIDDEN);
+      throw new PaymentGatewayException('More than one matching payment found');
     }
     /** @var \Drupal\commerce_payment\Entity\PaymentInterface $matching_payment */
     $matching_payment = reset($matching_payments);
@@ -263,22 +263,6 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
         return new Response('', Response::HTTP_I_AM_A_TEAPOT);
     }
     $matching_payment->save();
-
-    //// OrderEvent::ORDER_PAID only dispatches when
-    //if ($old_state === 'new'
-    //  && $matching_payment->getState()->getId() === 'authorization'
-    //  && $order->getTotalPrice()->subtract($matching_payment->getAmount())->lessThanOrEqual(new Price(0, $order->getTotalPrice()->getCurrencyCode()))) {
-    //
-    //  // The order has already been placed.
-    //  if ($order->getState()->getId() != 'draft') {
-    //    return new Response('', Response::HTTP_OK);
-    //  }
-    //
-    //  $order->getState()->applyTransitionById('place');
-    //  // A placed order should never be locked.
-    //  $order->unlock();
-    //  $order->save();
-    //}
 
     return new Response('', Response::HTTP_OK);
   }

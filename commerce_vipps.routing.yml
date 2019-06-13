@@ -10,3 +10,29 @@ commerce_vipps.notify:
         type: entity:commerce_payment_gateway
       order:
         type: entity:commerce_order
+
+commerce_vipps.consents:
+  path: '/payment/notify/{commerce_payment_gateway}/{order}/v2/consents/{remote_id}'
+  defaults:
+    _controller: '\Drupal\commerce_payment\Controller\PaymentNotificationController::notifyPage'
+  requirements:
+    _access: 'TRUE'
+  options:
+    parameters:
+      commerce_payment_gateway:
+        type: entity:commerce_payment_gateway
+      order:
+        type: entity:commerce_order
+
+commerce_vipps.shipping_details:
+  path: '/payment/notify/{commerce_payment_gateway}/{order}/v2/payments/{remote_id}/shippingDetails'
+  defaults:
+    _controller: '\Drupal\commerce_payment\Controller\PaymentNotificationController::notifyPage'
+  requirements:
+    _access: 'TRUE'
+  options:
+    parameters:
+      commerce_payment_gateway:
+        type: entity:commerce_payment_gateway
+      order:
+        type: entity:commerce_order

@@ -1,1 +1,51 @@
 <?php
+
+/**
+ * Implements hook_form_alter().
+ */
+function commerce_vipps_form_views_form_commerce_cart_form_default_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  if ($form_state->getFormObject() instanceof \Drupal\views\Form\ViewsForm) {
+    /** @var \Drupal\views\ViewExecutable $view */
+    $view = reset($form_state->getBuildInfo()['args']);
+    // Only add the Checkout button if the cart form view has order items.
+    if ($view->storage->get('tag') == 'commerce_cart_form' && !empty($view->result)) {
+
+      $payment_gateway_storage = \Drupal::entityTypeManager()->getStorage('commerce_payment_gateway');
+      /** @var \Drupal\commerce_payment\Entity\PaymentGatewayInterface[] $payment_gateways */
+      $payment_gateways = $payment_gateway_storage->loadByProperties(['plugin' => 'vipps_express', 'status' => TRUE]);
+      if (!$payment_gateways) {
+        return;
+      }
+      foreach ($payment_gateways as $payment_gateway) {
+        $form['actions']['express'] = [
+          '#type' => 'submit',
+          '#value' => t('Express checkout'),
+          '#weight' => 10,
+          '#access' => \Drupal::currentUser()->hasPermission('access checkout'),
+          '#submit' => array_merge($form['#submit'],
+            ['commerce_vipps_cart_form_submit']),
+          '#order_id' => $view->argument['order_id']->value[0],
+          '#payment_gateway' => $payment_gateway->id(),
+          '#update_cart' => TRUE,
+          '#show_update_message' => FALSE,
+        ];
+      }
+    }
+  }
+}
+
+/**
+ * Submit handler used to redirect to the checkout page.
+ */
+function commerce_vipps_cart_form_submit($form, \Drupal\Core\Form\FormStateInterface $form_state) {
+  $order_id = $form_state->getTriggeringElement()['#order_id'];
+  $payment_gateway_id = $form_state->getTriggeringElement()['#payment_gateway'];
+  $order = \Drupal\commerce_order\Entity\Order::load($order_id);
+  /** @var \Drupal\commerce_checkout\CheckoutOrderManagerInterface $checkout_manager */
+  $order->set('payment_gateway', \Drupal\commerce_payment\Entity\PaymentGateway::load($payment_gateway_id));
+  $order->set('payment_method', NULL);
+  $order->set('checkout_step', 'payment');
+  $order->lock();
+  $order->save();
+  $form_state->setRedirect('commerce_checkout.form', ['commerce_order' => $order_id]);
+}
