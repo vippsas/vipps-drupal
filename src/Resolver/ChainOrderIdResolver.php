@@ -2,6 +2,9 @@
 
 namespace Drupal\commerce_vipps\Resolver;
 
+/**
+ * Chain Order Id Resolver.
+ */
 class ChainOrderIdResolver implements ChainOrderIdResolverInterface {
 
   /**
@@ -46,4 +49,5 @@ class ChainOrderIdResolver implements ChainOrderIdResolverInterface {
       }
     }
   }
+
 }

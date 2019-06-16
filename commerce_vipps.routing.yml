@@ -3,6 +3,8 @@ commerce_vipps.notify:
   defaults:
     _controller: '\Drupal\commerce_payment\Controller\PaymentNotificationController::notifyPage'
   requirements:
+    # @TODO to be changed later.
+    # Needs to be accessed by an anonymous user.
     _access: 'TRUE'
   options:
     parameters:
@@ -16,6 +18,8 @@ commerce_vipps.consents:
   defaults:
     _controller: '\Drupal\commerce_payment\Controller\PaymentNotificationController::notifyPage'
   requirements:
+    # @TODO to be changed later.
+    # Needs to be accessed by an anonymous user.
     _access: 'TRUE'
   options:
     parameters:
@@ -29,6 +33,8 @@ commerce_vipps.shipping_details:
   defaults:
     _controller: '\Drupal\commerce_payment\Controller\PaymentNotificationController::notifyPage'
   requirements:
+    # @TODO to be changed later.
+    # Needs to be accessed by an anonymous user.
     _access: 'TRUE'
   options:
     parameters:

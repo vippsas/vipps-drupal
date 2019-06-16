@@ -5,7 +5,14 @@ namespace Drupal\commerce_vipps;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\DependencyInjection\ServiceProviderBase;
 
+/**
+ * Commerce Vipps Service Provider.
+ */
 class CommerceVippsServiceProvider extends ServiceProviderBase {
+
+  /**
+   * Implements hook_alter()
+   */
   public function alter(ContainerBuilder $container) {
     $modules = $container->getParameter('container.modules');
     if (isset($modules['commerce_shipping'])) {
@@ -18,4 +25,5 @@ class CommerceVippsServiceProvider extends ServiceProviderBase {
       $container->setDefinition('commerce_vipps.commerce_shipping_subscriber', $definition);
     }
   }
+
 }

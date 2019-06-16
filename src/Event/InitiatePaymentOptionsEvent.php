@@ -5,6 +5,9 @@ namespace Drupal\commerce_vipps\Event;
 use Drupal\commerce_payment\Entity\PaymentInterface;
 use Symfony\Component\EventDispatcher\Event;
 
+/**
+ * Initiate Payment Options Event.
+ */
 class InitiatePaymentOptionsEvent extends Event {
 
   /**
@@ -59,6 +62,8 @@ class InitiatePaymentOptionsEvent extends Event {
    * Vipps options.
    *
    * @param array $options
+   *
+   * @return $this
    */
   public function setOptions(array $options) {
     $this->options = $options;

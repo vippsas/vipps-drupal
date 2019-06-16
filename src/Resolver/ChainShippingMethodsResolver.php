@@ -5,6 +5,9 @@ namespace Drupal\commerce_vipps\Resolver;
 use Drupal\commerce_order\Entity\OrderInterface;
 use zaporylie\Vipps\Model\Payment\FetchShippingCostAndMethod;
 
+/**
+ * Chain Shipping Methods Resolver.
+ */
 class ChainShippingMethodsResolver implements ChainShippingMethodsResolverInterface {
 
   /**
@@ -49,4 +52,5 @@ class ChainShippingMethodsResolver implements ChainShippingMethodsResolverInterf
       }
     }
   }
+
 }

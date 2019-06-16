@@ -1,10 +1,20 @@
 <?php
 
 /**
- * Implements hook_form_alter().
+ * @file
+ * This module provides Vipps payment gateway integration to Commerce.
  */
-function commerce_vipps_form_views_form_commerce_cart_form_default_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
-  if ($form_state->getFormObject() instanceof \Drupal\views\Form\ViewsForm) {
+
+use Drupal\commerce_payment\Entity\PaymentGateway;
+use Drupal\commerce_order\Entity\Order;
+use Drupal\views\Form\ViewsForm;
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function commerce_vipps_form_views_form_commerce_cart_form_default_alter(&$form, FormStateInterface $form_state, $form_id) {
+  if ($form_state->getFormObject() instanceof ViewsForm) {
     /** @var \Drupal\views\ViewExecutable $view */
     $view = reset($form_state->getBuildInfo()['args']);
     // Only add the Checkout button if the cart form view has order items.
@@ -37,12 +47,12 @@ function commerce_vipps_form_views_form_commerce_cart_form_default_alter(&$form,
 /**
  * Submit handler used to redirect to the checkout page.
  */
-function commerce_vipps_cart_form_submit($form, \Drupal\Core\Form\FormStateInterface $form_state) {
+function commerce_vipps_cart_form_submit($form, FormStateInterface $form_state) {
   $order_id = $form_state->getTriggeringElement()['#order_id'];
   $payment_gateway_id = $form_state->getTriggeringElement()['#payment_gateway'];
-  $order = \Drupal\commerce_order\Entity\Order::load($order_id);
+  $order = Order::load($order_id);
   /** @var \Drupal\commerce_checkout\CheckoutOrderManagerInterface $checkout_manager */
-  $order->set('payment_gateway', \Drupal\commerce_payment\Entity\PaymentGateway::load($payment_gateway_id));
+  $order->set('payment_gateway', PaymentGateway::load($payment_gateway_id));
   $order->set('payment_method', NULL);
   $order->set('checkout_step', 'payment');
   $order->lock();

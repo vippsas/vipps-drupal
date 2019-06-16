@@ -2,8 +2,9 @@
 
 namespace Drupal\commerce_vipps\PluginForm\OffsiteRedirect;
 
-use Drupal\commerce_vipps\PluginForm\OffsiteRedirect\VippsLandingPageRedirectForm;
-
+/**
+ * Vipps Express Landing Page Redirect Form.
+ */
 class VippsExpressLandingPageRedirectForm extends VippsLandingPageRedirectForm {
 
 }

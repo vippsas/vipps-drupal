@@ -7,6 +7,9 @@ use Drupal\commerce_payment\Entity\PaymentInterface;
 use Symfony\Component\EventDispatcher\Event;
 use zaporylie\Vipps\Model\Payment\ResponseGetPaymentDetails;
 
+/**
+ * Return From Vipps Express Event.
+ */
 class ReturnFromVippsExpressEvent extends Event {
 
   /**

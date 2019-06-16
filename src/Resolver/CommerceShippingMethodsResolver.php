@@ -56,7 +56,7 @@ class CommerceShippingMethodsResolver implements ShippingMethodsResolverInterfac
 
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */
     $shipments = $order->shipments->referencedEntities();
-    list($shipments, ) = $this->packerManager->packToShipments($order, $profile, $shipments);
+    list($shipments,) = $this->packerManager->packToShipments($order, $profile, $shipments);
 
     /** @var \Drupal\commerce_shipping\ShippingMethodStorageInterface $shipping_method_storage */
     $shipping_method_storage = $this->entityTypeManager->getStorage('commerce_shipping_method');

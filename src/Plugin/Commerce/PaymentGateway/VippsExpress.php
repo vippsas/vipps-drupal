@@ -23,7 +23,6 @@ use zaporylie\Vipps\Model\Payment\ExpressCheckOutPaymentRequest;
 use zaporylie\Vipps\Model\Payment\FetchShippingCostAndMethod;
 use zaporylie\Vipps\Model\Payment\FetchShippingCostResponse;
 
-
 /**
  * Provides the Vipps payment gateway.
  *
@@ -79,7 +78,7 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
   /**
    * @param \Drupal\commerce_vipps\Resolver\ChainShippingMethodsResolverInterface $shippingMethodsResolver
    *
-   * @return $this;
+   * @return $this
    */
   public function setShippingMethodResolver(ChainShippingMethodsResolverInterface $shippingMethodResolver) {
     $this->shippingMethodResolver = $shippingMethodResolver;
@@ -113,12 +112,16 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
     }
   }
 
+  /**
+   * Do Consent Removal.
+   */
   protected function doConsentRemoval(Request $request) {
     \Drupal::logger('commerce_vipps')->alert('Method not supported');
   }
 
   /**
    * @param \Symfony\Component\HttpFoundation\Request $request
+   * @return
    */
   protected function doNotify(Request $request) {
     try {
@@ -132,13 +135,15 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
     $content = ExpressCheckOutPaymentRequest::fromString($request->getContent());
     switch ($content->getTransactionInfo()->getStatus()) {
       case 'RESERVE':
-        $payment->setAmount(new Price((string) $content->getTransactionInfo()->getAmount()/100, $payment->getAmount()->getCurrencyCode()));
+        $payment->setAmount(new Price((string) $content->getTransactionInfo()->getAmount() / 100, $payment->getAmount()->getCurrencyCode()));
         $payment->setState('authorization');
         break;
+
       case 'SALE':
-        $payment->setAmount(new Price((string) $content->getTransactionInfo()->getAmount()/100, $payment->getAmount()->getCurrencyCode()));
+        $payment->setAmount(new Price((string) $content->getTransactionInfo()->getAmount() / 100, $payment->getAmount()->getCurrencyCode()));
         $payment->setState('completed');
         break;
+
       case 'CANCELLED':
       case 'REJECTED':
         // @todo: There is no corresponding state in payment workflow but it's
@@ -164,7 +169,7 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
    */
   protected function doShippingDetails(Request $request) {
     $incomingData = $request->getContent();
-    /** @var FetchShippingCostAndMethod $incomingData */
+    /** @var \zaporylie\Vipps\Model\Payment\FetchShippingCostAndMethod $incomingData */
     $incomingData = FetchShippingCostAndMethod::fromString($incomingData);
     try {
       $payment = $this->getPaymentFromRequest($request);
@@ -231,9 +236,11 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
       case 'RESERVE':
         $matching_payment->setState('authorization');
         break;
+
       case 'SALE':
         $matching_payment->setState('completed');
         break;
+
       case 'RESERVE_FAILED':
       case 'SALE_FAILED':
       case 'CANCEL':
@@ -279,4 +286,5 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
     $order->save();
     $matching_payment->save();
   }
+
 }

@@ -8,7 +8,6 @@ use Drupal\commerce_payment\Exception\PaymentGatewayException;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\SupportsAuthorizationsInterface;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\SupportsNotificationsInterface;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\SupportsRefundsInterface;
-use Drupal\commerce_payment\Entity\Payment;
 use Drupal\commerce_vipps\VippsManager;
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_payment\PaymentMethodTypeManager;
@@ -18,15 +17,11 @@ use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use zaporylie\Vipps\Exceptions\VippsException;
-use zaporylie\Vipps\Model\OrderStatus;
 use Drupal\commerce_price\Price;
-use zaporylie\Vipps\Model\Payment\ExpressCheckOutPaymentRequest;
 
 /**
  * Provides the Vipps payment gateway.
@@ -96,41 +91,41 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
     $form = parent::buildConfigurationForm($form, $form_state);
     $form['client_id'] = [
       '#type' => 'textfield',
-      '#title' => t('Client ID'),
+      '#title' => $this->t('Client ID'),
       '#required' => TRUE,
-      '#description' => t('Client ID'),
+      '#description' => $this->t('Client ID'),
       '#default_value' => $this->configuration['client_id'],
     ];
     $form['subscription_key_authorization'] = [
       '#type' => 'textfield',
-      '#title' => t('Subscription Key - Authorization'),
+      '#title' => $this->t('Subscription Key - Authorization'),
       '#required' => TRUE,
       '#default_value' => $this->configuration['subscription_key_authorization'],
     ];
     $form['client_secret'] = [
       '#type' => 'textfield',
-      '#title' => t('Client secret'),
+      '#title' => $this->t('Client secret'),
       '#required' => TRUE,
-      '#description' => t('Client Secret'),
+      '#description' => $this->t('Client Secret'),
       '#default_value' => $this->configuration['client_secret'],
     ];
     $form['subscription_key_payment'] = [
       '#type' => 'textfield',
-      '#title' => t('Subscription Key - Payment'),
+      '#title' => $this->t('Subscription Key - Payment'),
       '#required' => TRUE,
       '#default_value' => $this->configuration['subscription_key_payment'],
     ];
     $form['serial_number'] = [
       '#type' => 'textfield',
-      '#title' => t('Serial Number'),
+      '#title' => $this->t('Serial Number'),
       '#required' => TRUE,
-      '#description' => t('Merchant Serial Number'),
+      '#description' => $this->t('Merchant Serial Number'),
       '#default_value' => $this->configuration['serial_number'],
     ];
     $form['prefix'] = [
       '#type' => 'textfield',
-      '#title' => t('Prefix'),
-      '#description' => t('Add alphanumeric prefix to Order ID in Vipps, in case you\'re creating Vipps payments from multiple independent systems'),
+      '#title' => $this->t('Prefix'),
+      '#description' => $this->t("Add alphanumeric prefix to Order ID in Vipps, in case you're creating Vipps payments from multiple independent systems"),
       '#default_value' => $this->configuration['prefix'],
     ];
     return $form;
@@ -172,10 +167,12 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
         $matching_payment->setState('authorization');
         $matching_payment->save();
         break;
+
       case 'SALE':
         $matching_payment->setState('completed');
         $matching_payment->save();
         break;
+
       case 'RESERVE_FAILED':
       case 'SALE_FAILED':
       case 'CANCEL':
@@ -210,7 +207,6 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
   public function onNotify(Request $request) {
 
     // @todo: Validate order and payment existance.
-
     /** @var \Drupal\commerce_payment\Entity\PaymentGatewayInterface $commerce_payment_gateway */
     $commerce_payment_gateway = $request->attributes->get('commerce_payment_gateway');
 
@@ -236,17 +232,19 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
       return new Response('', Response::HTTP_FORBIDDEN);
     }
     /** @var \Drupal\commerce_payment\Entity\PaymentInterface $matching_payment */
+    // $old_state = $matching_payment->getState()->getId();
     $matching_payment = reset($matching_payments);
-    $old_state = $matching_payment->getState()->getId();
 
     $content = json_decode($content, TRUE);
     switch ($content['transactionInfo']['status']) {
       case 'RESERVED':
         $matching_payment->setState('authorization');
         break;
+
       case 'SALE':
         $matching_payment->setState('completed');
         break;
+
       case 'RESERVE_FAILED':
       case 'SALE_FAILED':
       case 'CANCELLED':
@@ -288,7 +286,7 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
     catch (VippsException $exception) {
       if ($exception->getError()->getCode() == 61) {
         // Insufficient funds.
-        // Check if order has already been captured and for what amount,
+        // Check if order has already been captured and for what amount,.
         foreach ($payment_manager->getPaymentDetails($remote_id)->getTransactionLogHistory() as $item) {
           if (in_array($item->getOperation(), ['CAPTURE', 'SALE']) && $item->getOperationSuccess()) {
             $payment->setAmount(new Price($item->getAmount() / 100, $payment->getAmount()->getCurrencyCode()));

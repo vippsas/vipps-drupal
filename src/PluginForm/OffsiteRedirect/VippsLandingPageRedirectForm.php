@@ -104,7 +104,7 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
           $payment->getRemoteId(),
           (int) $payment->getAmount()->multiply(100)->getNumber(),
           $this->t('Payment for order @order_id', ['@order_id' => $payment->getOrderId()]),
-          // Get standard payment notification callback and add
+          // Get standard payment notification callback and add.
           rtrim($plugin->getNotifyUrl()->toString(), '/') . '/' . $payment->getOrderId(),
           $form['#return_url'],
           $options
@@ -115,7 +115,7 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
       throw new PaymentGatewayException($exception->getMessage());
     }
 
-    // If the payment was successfully created at remote host
+    // If the payment was successfully created at remote host.
     $payment->save();
     if ($order_changed === TRUE) {
       $order->save();
@@ -132,8 +132,9 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
   private function generateAuthToken() {
     try {
       $randomStr = random_bytes(16);
-    } catch (\Exception $e) {
-      $randomStr = uniqid('', true);
+    }
+    catch (\Exception $e) {
+      $randomStr = uniqid('', TRUE);
     }
     return bin2hex($randomStr);
   }

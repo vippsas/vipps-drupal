@@ -2,6 +2,9 @@
 
 namespace Drupal\commerce_vipps\Event;
 
+/**
+ * Vipps Events.
+ */
 final class VippsEvents {
 
   /**

@@ -10,7 +10,7 @@ use Drupal\commerce_vipps\Event\VippsEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * commerce_vipps event subscriber.
+ * Commerce_vipps event subscriber.
  */
 class CommerceVippsSubscriber implements EventSubscriberInterface {
 
@@ -22,7 +22,9 @@ class CommerceVippsSubscriber implements EventSubscriberInterface {
    */
   public function filterExpressCheckout(FilterPaymentGatewaysEvent $event) {
     $payment_gateways = $event->getPaymentGateways();
-    $payment_gateways = array_filter($payment_gateways, function (PaymentGatewayInterface $payment_gateway) { return $payment_gateway->getPluginId() !== 'vipps_express'; });
+    $payment_gateways = array_filter($payment_gateways, function (PaymentGatewayInterface $payment_gateway) {
+      return $payment_gateway->getPluginId() !== 'vipps_express';
+    });
     $event->setPaymentGateways($payment_gateways);
   }
 
@@ -37,7 +39,7 @@ class CommerceVippsSubscriber implements EventSubscriberInterface {
       $event->setOptions($event->getOptions() + [
         'paymentType' => 'eComm Express Payment',
         'shippingDetailsPrefix' => rtrim($plugin->getNotifyUrl()->toString(), '/') . '/' . $event->getPayment()->getOrderId(),
-        'consentRemovalPrefix' => rtrim($plugin->getNotifyUrl()->toString(), '/') . '/' . $event->getPayment()->getOrderId()
+        'consentRemovalPrefix' => rtrim($plugin->getNotifyUrl()->toString(), '/') . '/' . $event->getPayment()->getOrderId(),
       ]);
     }
   }

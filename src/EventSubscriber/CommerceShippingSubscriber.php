@@ -10,7 +10,7 @@ use Drupal\Core\Entity\EntityTypeManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
- * commerce_vipps event subscriber.
+ * Commerce_vipps event subscriber.
  */
 class CommerceShippingSubscriber implements EventSubscriberInterface {
 
@@ -63,7 +63,7 @@ class CommerceShippingSubscriber implements EventSubscriberInterface {
 
     /** @var \Drupal\commerce_shipping\Entity\ShipmentInterface[] $shipments */
     $shipments = $order->shipments->referencedEntities();
-    list($shipments, ) = $this->packerManager->packToShipments($order, $profile, $shipments);
+    list($shipments,) = $this->packerManager->packToShipments($order, $profile, $shipments);
 
     // @todo: Possibly not only the first one.
     $shipment = $shipments[0];
@@ -83,7 +83,7 @@ class CommerceShippingSubscriber implements EventSubscriberInterface {
     $event->setOrder($order);
 
     // Amend the payment amount.
-    $payment->setAmount(new Price((string) ($details->getTransactionSummary()->getCapturedAmount() + $details->getTransactionSummary()->getRemainingAmountToCapture())/100, $payment->getAmount()->getCurrencyCode()));
+    $payment->setAmount(new Price((string) ($details->getTransactionSummary()->getCapturedAmount() + $details->getTransactionSummary()->getRemainingAmountToCapture()) / 100, $payment->getAmount()->getCurrencyCode()));
     $event->setPayment($payment);
   }
 
