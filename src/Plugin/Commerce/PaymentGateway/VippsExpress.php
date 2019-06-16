@@ -129,7 +129,7 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
     }
 
     /** @var \zaporylie\Vipps\Model\Payment\ExpressCheckOutPaymentRequest $content */
-    $content = ExpressCheckOutPaymentRequest::createFromString($request->getContent());
+    $content = ExpressCheckOutPaymentRequest::fromString($request->getContent());
     switch ($content->getTransactionInfo()->getStatus()) {
       case 'RESERVE':
         $payment->setAmount(new Price((string) $content->getTransactionInfo()->getAmount()/100, $payment->getAmount()->getCurrencyCode()));
@@ -145,7 +145,7 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
         // still better to keep the payment with invalid state than delete it
         // entirely.
         $payment->setState('failed');
-        $payment->setRemoteState(Xss::filter($content['transactionInfo']['status']));
+        $payment->setRemoteState(Xss::filter($content->getTransactionInfo()->getStatus()));
         break;
 
       default:
@@ -165,7 +165,7 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
   protected function doShippingDetails(Request $request) {
     $incomingData = $request->getContent();
     /** @var FetchShippingCostAndMethod $incomingData */
-    $incomingData = FetchShippingCostAndMethod::createFromString($incomingData);
+    $incomingData = FetchShippingCostAndMethod::fromString($incomingData);
     try {
       $payment = $this->getPaymentFromRequest($request);
     }
@@ -180,7 +180,7 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
       ->setAddressId($incomingData->getAddressId())
       ->setOrderId($payment->getRemoteId())
       ->setShippingDetails($this->shippingMethodResolver->resolve($payment->getOrder(), $incomingData));
-    return new Response((string) $availableShippingMethods, Response::HTTP_OK, ['Content-Type' => 'application/json']);
+    return new Response($availableShippingMethods->toString(), Response::HTTP_OK, ['Content-Type' => 'application/json']);
   }
 
   /**
