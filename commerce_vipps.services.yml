@@ -34,3 +34,8 @@ services:
     abstract: true
     tags:
       - { name: event_subscriber }
+  commerce_vipps.return_from_vipps_express_subscriber:
+    class: Drupal\commerce_vipps\EventSubscriber\ReturnFromVippsExpressSubscriber
+    arguments: ['@entity_type.manager']
+    tags:
+      - { name: event_subscriber }
