@@ -135,12 +135,12 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
     $content = ExpressCheckOutPaymentRequest::fromString($request->getContent());
     switch ($content->getTransactionInfo()->getStatus()) {
       case 'RESERVE':
-        $payment->setAmount(new Price((string) $content->getTransactionInfo()->getAmount() / 100, $payment->getAmount()->getCurrencyCode()));
+        $payment->setAmount(new Price((string) ($content->getTransactionInfo()->getAmount() / 100), $payment->getAmount()->getCurrencyCode()));
         $payment->setState('authorization');
         break;
 
       case 'SALE':
-        $payment->setAmount(new Price((string) $content->getTransactionInfo()->getAmount() / 100, $payment->getAmount()->getCurrencyCode()));
+        $payment->setAmount(new Price((string) ($content->getTransactionInfo()->getAmount() / 100), $payment->getAmount()->getCurrencyCode()));
         $payment->setState('completed');
         break;
 

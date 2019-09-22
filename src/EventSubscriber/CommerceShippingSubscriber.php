@@ -7,7 +7,9 @@ use Drupal\commerce_shipping\PackerManagerInterface;
 use Drupal\commerce_vipps\Event\ReturnFromVippsExpressEvent;
 use Drupal\commerce_vipps\Event\VippsEvents;
 use Drupal\Core\Entity\EntityTypeManager;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use zaporylie\Vipps\Model\Payment\ResponseGetPaymentDetails;
 
 /**
  * Commerce_vipps event subscriber.
@@ -27,10 +29,10 @@ class CommerceShippingSubscriber implements EventSubscriberInterface {
   /**
    * CommerceShippingSubscriber constructor.
    *
-   * @param \Drupal\Core\Entity\EntityTypeManager $entityTypeManager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    * @param \Drupal\commerce_shipping\PackerManagerInterface $packerManager
    */
-  public function __construct(EntityTypeManager $entityTypeManager, PackerManagerInterface $packerManager) {
+  public function __construct(EntityTypeManagerInterface $entityTypeManager, PackerManagerInterface $packerManager) {
     $this->entityTypeManager = $entityTypeManager;
     $this->packerManager = $packerManager;
   }
@@ -83,8 +85,29 @@ class CommerceShippingSubscriber implements EventSubscriberInterface {
     $event->setOrder($order);
 
     // Amend the payment amount.
-    $payment->setAmount(new Price((string) ($details->getTransactionSummary()->getCapturedAmount() + $details->getTransactionSummary()->getRemainingAmountToCapture()) / 100, $payment->getAmount()->getCurrencyCode()));
+    $this->amendPrice($event);
+  }
+
+  /**
+   * @param \Drupal\commerce_vipps\Event\ReturnFromVippsExpressEvent $event.
+   */
+  public function amendPrice(ReturnFromVippsExpressEvent $event) {
+    $details = $event->getDetails();
+    $payment = $event->getPayment();
+    $payment->setAmount($this->getAmendedPrice($details, $payment->getAmount()));
     $event->setPayment($payment);
+  }
+
+  /**
+   * Calculates amended price based on ResponseGetPaymentDetails object.
+   *
+   * @param \zaporylie\Vipps\Model\Payment\ResponseGetPaymentDetails $details
+   * @param \Drupal\commerce_price\Price $amount
+   *
+   * @return \Drupal\commerce_price\Price
+   */
+  public function getAmendedPrice(ResponseGetPaymentDetails $details, Price $amount) {
+    return new Price((string) (($details->getTransactionSummary()->getCapturedAmount() + $details->getTransactionSummary()->getRemainingAmountToCapture()) / 100), $amount->getCurrencyCode());
   }
 
   /**
