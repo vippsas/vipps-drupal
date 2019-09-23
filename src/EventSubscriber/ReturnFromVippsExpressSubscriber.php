@@ -2,11 +2,12 @@
 
 namespace Drupal\commerce_vipps\EventSubscriber;
 
-use Drupal\commerce_shipping\PackerManagerInterface;
+use Drupal\commerce_price\Price;
 use Drupal\commerce_vipps\Event\ReturnFromVippsExpressEvent;
 use Drupal\commerce_vipps\Event\VippsEvents;
-use Drupal\Core\Entity\EntityTypeManager;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use zaporylie\Vipps\Model\Payment\ResponseGetPaymentDetails;
 
 /**
  * Commerce_vipps event subscriber.
@@ -21,9 +22,9 @@ class ReturnFromVippsExpressSubscriber implements EventSubscriberInterface {
   /**
    * CommerceShippingSubscriber constructor.
    *
-   * @param \Drupal\Core\Entity\EntityTypeManager $entityTypeManager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    */
-  public function __construct(EntityTypeManager $entityTypeManager) {
+  public function __construct(EntityTypeManagerInterface $entityTypeManager) {
     $this->entityTypeManager = $entityTypeManager;
   }
 
@@ -36,6 +37,7 @@ class ReturnFromVippsExpressSubscriber implements EventSubscriberInterface {
   public function createBillingProfile(ReturnFromVippsExpressEvent $event) {
     $details = $event->getDetails();
     $order = $event->getOrder();
+    $order->setEmail($details->getUserDetails()->getEmail());
     /** @var \Drupal\profile\Entity\Profile $profile */
     $profile = $this->entityTypeManager->getStorage('profile')->create([
       'type' => 'customer',
@@ -52,7 +54,30 @@ class ReturnFromVippsExpressSubscriber implements EventSubscriberInterface {
     ]);
     $profile->save();
     $order->setBillingProfile($profile);
-    $event->setOrder($order);
+    // Amend the payment amount.
+    $this->amendPrice($event);
+  }
+
+  /**
+   * @param \Drupal\commerce_vipps\Event\ReturnFromVippsExpressEvent $event.
+   */
+  public function amendPrice(ReturnFromVippsExpressEvent $event) {
+    $details = $event->getDetails();
+    $payment = $event->getPayment();
+    $payment->setAmount($this->getAmendedPrice($details, $payment->getAmount()));
+    $event->setPayment($payment);
+  }
+
+  /**
+   * Calculates amended price based on ResponseGetPaymentDetails object.
+   *
+   * @param \zaporylie\Vipps\Model\Payment\ResponseGetPaymentDetails $details
+   * @param \Drupal\commerce_price\Price $amount
+   *
+   * @return \Drupal\commerce_price\Price
+   */
+  public function getAmendedPrice(ResponseGetPaymentDetails $details, Price $amount) {
+    return new Price((string) (($details->getTransactionSummary()->getCapturedAmount() + $details->getTransactionSummary()->getRemainingAmountToCapture()) / 100), $amount->getCurrencyCode());
   }
 
   /**
