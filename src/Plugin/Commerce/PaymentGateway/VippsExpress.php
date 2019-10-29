@@ -234,17 +234,22 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
     $status = $payment_manager->getOrderStatus($remote_id);
     switch ($status->getTransactionInfo()->getStatus()) {
       case 'RESERVE':
+        $matching_payment->setAmount(new Price((string) ($status->getTransactionInfo()->getAmount() / 100), $matching_payment->getAmount()->getCurrencyCode()));
         $matching_payment->setState('authorization');
+        $matching_payment->save();
         break;
 
       case 'SALE':
+        $matching_payment->setAmount(new Price((string) ($status->getTransactionInfo()->getAmount() / 100), $matching_payment->getAmount()->getCurrencyCode()));
         $matching_payment->setState('completed');
+        $matching_payment->save();
         break;
 
       case 'RESERVE_FAILED':
       case 'SALE_FAILED':
       case 'CANCEL':
       case 'REJECTED':
+      case 'INITIATE':
         // @todo: There is no corresponding state in payment workflow but it's
         // still better to keep the payment with invalid state than delete it
         // entirely.
@@ -260,31 +265,6 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
       default:
         throw new NeedsRedirectException('/cart');
     }
-
-    // Get payment details.
-    $details = $payment_manager->getPaymentDetails($remote_id);
-    $address = $details->getShippingDetails()->getAddress();
-
-    // Only Norway is supported by Vipps.
-    if ($address->getCountry() !== 'Norway') {
-      $matching_payment->setState('failed');
-      $matching_payment->setRemoteState(Xss::filter($status->getTransactionInfo()->getStatus()));
-      $matching_payment->save();
-      $order->set('payment_gateway', NULL);
-      $order->set('payment_method', NULL);
-      $order->set('checkout_step', NULL);
-      $order->unlock();
-      $order->save();
-      throw new NeedsRedirectException('/cart');
-    }
-
-    // Dispatch the event.
-    $event = new ReturnFromVippsExpressEvent($matching_payment, $order, $details);
-    $this->eventDispatcher->dispatch(VippsEvents::RETURN_FROM_VIPPS_EXPRESS, $event);
-
-    // Save data on order and payment.
-    $order->save();
-    $matching_payment->save();
   }
 
 }

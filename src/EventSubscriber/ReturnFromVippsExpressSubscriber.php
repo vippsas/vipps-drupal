@@ -65,7 +65,6 @@ class ReturnFromVippsExpressSubscriber implements EventSubscriberInterface {
     $details = $event->getDetails();
     $payment = $event->getPayment();
     $payment->setAmount($this->getAmendedPrice($details, $payment->getAmount()));
-    $event->setPayment($payment);
   }
 
   /**

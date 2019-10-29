@@ -2,6 +2,10 @@ services:
   commerce_vipps.manager:
     class: Drupal\commerce_vipps\VippsManager
     arguments: ['@http_client']
+  logger.channel.commerce_vipps:
+    class: Drupal\Core\Logger\LoggerChannel
+    factory: logger.factory:get
+    arguments: ['commerce_vipps']
   commerce_vipps.chain_order_id_resolver:
     class: Drupal\commerce_vipps\Resolver\ChainOrderIdResolver
     tags:
@@ -30,8 +34,13 @@ services:
       - { name: event_subscriber }
   commerce_vipps.commerce_shipping_subscriber:
     class: Drupal\commerce_vipps\EventSubscriber\CommerceShippingSubscriber
-    arguments: ['@entity_type.manager', '@commerce_shipping.packer_manager']
+    arguments: ['@entity_type.manager', '@commerce_shipping.packer_manager', '@commerce_shipping.shipment_order_processor']
     abstract: true
+    tags:
+      - { name: event_subscriber }
+  commerce_vipps.commerce_order_subscriber:
+    class: Drupal\commerce_vipps\EventSubscriber\CommerceOrderSubscriber
+    arguments: ['@entity_type.manager', '@commerce_vipps.manager', '@event_dispatcher', '@logger.channel.commerce_vipps']
     tags:
       - { name: event_subscriber }
   commerce_vipps.return_from_vipps_express_subscriber:

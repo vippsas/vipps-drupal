@@ -5,6 +5,7 @@ namespace Drupal\commerce_vipps\EventSubscriber;
 use Drupal\commerce_order\Adjustment;
 use Drupal\commerce_price\Price;
 use Drupal\commerce_shipping\PackerManagerInterface;
+use Drupal\commerce_shipping\ShipmentOrderProcessor;
 use Drupal\commerce_vipps\Event\ReturnFromVippsExpressEvent;
 use Drupal\commerce_vipps\Event\VippsEvents;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -26,14 +27,21 @@ class CommerceShippingSubscriber implements EventSubscriberInterface {
   protected $packerManager;
 
   /**
+   * @var \Drupal\commerce_shipping\ShipmentOrderProcessor
+   */
+  protected $shipmentOrderProcessor;
+
+  /**
    * CommerceShippingSubscriber constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    * @param \Drupal\commerce_shipping\PackerManagerInterface $packerManager
+   * @param \Drupal\commerce_shipping\ShipmentOrderProcessor
    */
-  public function __construct(EntityTypeManagerInterface $entityTypeManager, PackerManagerInterface $packerManager) {
+  public function __construct(EntityTypeManagerInterface $entityTypeManager, PackerManagerInterface $packerManager, ShipmentOrderProcessor $shipmentOrderProcessor) {
     $this->entityTypeManager = $entityTypeManager;
     $this->packerManager = $packerManager;
+    $this->shipmentOrderProcessor = $shipmentOrderProcessor;
   }
 
   /**
@@ -77,8 +85,11 @@ class CommerceShippingSubscriber implements EventSubscriberInterface {
     $shipment->setShippingMethodId($shipping_method_id);
     $shipment->setShippingProfile($profile);
     $shipment->setShippingService($shipping_service_id);
+    $shipment->setData('owned_by_packer', FALSE);
     $shipment->save();
     $order->set('shipments', [$shipment]);
+
+    $this->shipmentOrderProcessor->process($order);
   }
 
   /**
