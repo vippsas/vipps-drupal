@@ -53,6 +53,7 @@ class InitiatePaymentOptionsEvent extends Event {
    * Vipps options.
    *
    * @return array
+   *   Array of options.
    */
   public function getOptions() {
     return $this->options;
@@ -62,6 +63,7 @@ class InitiatePaymentOptionsEvent extends Event {
    * Vipps options.
    *
    * @param array $options
+   *   Array of options.
    *
    * @return $this
    */

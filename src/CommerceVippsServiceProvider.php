@@ -11,7 +11,7 @@ use Drupal\Core\DependencyInjection\ServiceProviderBase;
 class CommerceVippsServiceProvider extends ServiceProviderBase {
 
   /**
-   * Implements hook_alter()
+   * {@inheritDoc}
    */
   public function alter(ContainerBuilder $container) {
     $modules = $container->getParameter('container.modules');

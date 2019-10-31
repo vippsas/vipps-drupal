@@ -2,7 +2,6 @@
 
 namespace Drupal\commerce_vipps\EventSubscriber;
 
-use Drupal\commerce_order\Adjustment;
 use Drupal\commerce_price\Price;
 use Drupal\commerce_shipping\PackerManagerInterface;
 use Drupal\commerce_shipping\ShipmentOrderProcessor;
@@ -17,16 +16,22 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class CommerceShippingSubscriber implements EventSubscriberInterface {
 
   /**
+   * The entity type manager.
+   *
    * @var \Drupal\Core\Entity\EntityTypeManager
    */
   protected $entityTypeManager;
 
   /**
+   * The packer manager.
+   *
    * @var \Drupal\commerce_shipping\PackerManagerInterface
    */
   protected $packerManager;
 
   /**
+   * The shipment order processor.
+   *
    * @var \Drupal\commerce_shipping\ShipmentOrderProcessor
    */
   protected $shipmentOrderProcessor;
@@ -35,8 +40,11 @@ class CommerceShippingSubscriber implements EventSubscriberInterface {
    * CommerceShippingSubscriber constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
    * @param \Drupal\commerce_shipping\PackerManagerInterface $packerManager
-   * @param \Drupal\commerce_shipping\ShipmentOrderProcessor
+   *   The packer manager.
+   * @param \Drupal\commerce_shipping\ShipmentOrderProcessor $shipmentOrderProcessor
+   *   The shipment order processor.
    */
   public function __construct(EntityTypeManagerInterface $entityTypeManager, PackerManagerInterface $packerManager, ShipmentOrderProcessor $shipmentOrderProcessor) {
     $this->entityTypeManager = $entityTypeManager;

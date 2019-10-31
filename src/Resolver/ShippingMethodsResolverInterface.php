@@ -14,6 +14,7 @@ interface ShippingMethodsResolverInterface {
    * Resolves available shipping methods.
    *
    * @return \zaporylie\Vipps\Model\Payment\ShippingDetails[]
+   *   Array of shipping details.
    */
   public function resolve(OrderInterface $order, FetchShippingCostAndMethod $address);
 

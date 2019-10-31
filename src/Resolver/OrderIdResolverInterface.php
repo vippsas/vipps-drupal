@@ -11,6 +11,7 @@ interface OrderIdResolverInterface {
    * Resolves the remote order id.
    *
    * @return string
+   *   Resolved remote order ID.
    */
   public function resolve();
 

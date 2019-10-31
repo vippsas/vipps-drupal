@@ -53,42 +53,57 @@ class ReturnFromVippsExpressEvent extends Event {
   }
 
   /**
+   * Returns the order.
+   *
    * @return \Drupal\commerce_order\Entity\OrderInterface
+   *   The order.
    */
   public function getOrder() {
     return $this->order;
   }
 
   /**
+   * Returns payment.
+   *
    * @return \Drupal\commerce_payment\Entity\PaymentInterface
+   *   The payment.
    */
   public function getPayment() {
     return $this->payment;
   }
 
   /**
+   * Returns payment details.
+   *
    * @return \zaporylie\Vipps\Model\Payment\ResponseGetPaymentDetails
+   *   Payment details.
    */
   public function getDetails() {
     return $this->details;
   }
 
   /**
+   * Allows for setting the order.
+   *
    * @param \Drupal\commerce_order\Entity\OrderInterface $order
+   *   The order.
    *
    * @return $this
    */
-  public function setOrder($order) {
+  public function setOrder(OrderInterface $order) {
     $this->order = $order;
     return $this;
   }
 
   /**
+   * Allows for setting the payment.
+   *
    * @param \Drupal\commerce_payment\Entity\PaymentInterface $payment
+   *   The payment.
    *
    * @return $this
    */
-  public function setPayment($payment) {
+  public function setPayment(PaymentInterface $payment) {
     $this->payment = $payment;
     return $this;
   }

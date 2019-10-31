@@ -15,11 +15,15 @@ use zaporylie\Vipps\Model\Payment\ShippingDetails;
 class CommerceShippingMethodsResolver implements ShippingMethodsResolverInterface {
 
   /**
+   * The packer manager.
+   *
    * @var \Drupal\commerce_shipping\PackerManagerInterface
    */
   protected $packerManager;
 
   /**
+   * The entity type manager.
+   *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
@@ -28,6 +32,9 @@ class CommerceShippingMethodsResolver implements ShippingMethodsResolverInterfac
    * CommerceShippingMethodsResolver constructor.
    *
    * @param \Drupal\commerce_shipping\PackerManagerInterface $packerManager
+   *   The Packer Manager.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
    */
   public function __construct(PackerManagerInterface $packerManager, EntityTypeManagerInterface $entityTypeManager) {
     $this->packerManager = $packerManager;

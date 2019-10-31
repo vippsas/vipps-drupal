@@ -15,6 +15,8 @@ use zaporylie\Vipps\Model\Payment\ResponseGetPaymentDetails;
 class ReturnFromVippsExpressSubscriber implements EventSubscriberInterface {
 
   /**
+   * The entity type manager.
+   *
    * @var \Drupal\Core\Entity\EntityTypeManager
    */
   protected $entityTypeManager;
@@ -23,6 +25,7 @@ class ReturnFromVippsExpressSubscriber implements EventSubscriberInterface {
    * CommerceShippingSubscriber constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity type manager.
    */
   public function __construct(EntityTypeManagerInterface $entityTypeManager) {
     $this->entityTypeManager = $entityTypeManager;
@@ -59,7 +62,10 @@ class ReturnFromVippsExpressSubscriber implements EventSubscriberInterface {
   }
 
   /**
-   * @param \Drupal\commerce_vipps\Event\ReturnFromVippsExpressEvent $event.
+   * Amend price based on the event.
+   *
+   * @param \Drupal\commerce_vipps\Event\ReturnFromVippsExpressEvent $event
+   *   The return form vipps express event.
    */
   public function amendPrice(ReturnFromVippsExpressEvent $event) {
     $details = $event->getDetails();
@@ -71,9 +77,12 @@ class ReturnFromVippsExpressSubscriber implements EventSubscriberInterface {
    * Calculates amended price based on ResponseGetPaymentDetails object.
    *
    * @param \zaporylie\Vipps\Model\Payment\ResponseGetPaymentDetails $details
+   *   Payment details.
    * @param \Drupal\commerce_price\Price $amount
+   *   The Price.
    *
    * @return \Drupal\commerce_price\Price
+   *   The price.
    */
   public function getAmendedPrice(ResponseGetPaymentDetails $details, Price $amount) {
     return new Price((string) (($details->getTransactionSummary()->getCapturedAmount() + $details->getTransactionSummary()->getRemainingAmountToCapture()) / 100), $amount->getCurrencyCode());

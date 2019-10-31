@@ -32,6 +32,7 @@ class CommerceVippsSubscriber implements EventSubscriberInterface {
    * Set correct payment method type for express payment.
    *
    * @param \Drupal\commerce_vipps\Event\InitiatePaymentOptionsEvent $event
+   *   The initiate payment options event.
    */
   public function setPaymentMethod(InitiatePaymentOptionsEvent $event) {
     $plugin = $event->getPayment()->getPaymentGateway()->getPlugin();

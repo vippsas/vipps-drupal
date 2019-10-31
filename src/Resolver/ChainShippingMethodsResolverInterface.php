@@ -3,6 +3,8 @@
 namespace Drupal\commerce_vipps\Resolver;
 
 /**
+ * Chain shipping method resolver.
+ *
  * Runs the added resolvers one by one until one of them returns the available
  * shipping methods.
  *

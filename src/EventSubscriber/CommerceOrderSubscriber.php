@@ -11,24 +11,37 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+/**
+ * Commerce Order Subscriber.
+ *
+ * @package Drupal\commerce_vipps\EventSubscriber
+ */
 class CommerceOrderSubscriber implements EventSubscriberInterface {
 
   /**
+   * The entity type manager.
+   *
    * @var \Drupal\Core\Entity\EntityTypeManager
    */
   protected $entityTypeManager;
 
   /**
+   * The Vipps manager.
+   *
    * @var \Drupal\commerce_vipps\VippsManager
    */
   protected $vippsManager;
 
   /**
+   * The event dispatcher.
+   *
    * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
    */
   protected $eventDispatcher;
 
   /**
+   * The logger interface.
+   *
    * @var \Psr\Log\LoggerInterface
    */
   protected $logger;
@@ -37,9 +50,13 @@ class CommerceOrderSubscriber implements EventSubscriberInterface {
    * CommerceShippingSubscriber constructor.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The entity manager.
    * @param \Drupal\commerce_vipps\VippsManager $vippsManager
-   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   *   The vipps manager.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
+   *   The event dispatcher.
    * @param \Psr\Log\LoggerInterface $logger
+   *   The logger.
    */
   public function __construct(EntityTypeManagerInterface $entityTypeManager, VippsManager $vippsManager, EventDispatcherInterface $eventDispatcher, LoggerInterface $logger) {
     $this->entityTypeManager = $entityTypeManager;
@@ -90,6 +107,7 @@ class CommerceOrderSubscriber implements EventSubscriberInterface {
     // Save the payment in case it was modified.
     $matching_payment->save();
   }
+
   /**
    * {@inheritdoc}
    */
