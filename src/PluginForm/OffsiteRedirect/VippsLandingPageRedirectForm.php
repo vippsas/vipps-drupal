@@ -21,16 +21,22 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements ContainerInjectionInterface {
 
   /**
+   * The Vipps manager.
+   *
    * @var \Drupal\commerce_vipps\VippsManager
    */
   protected $vippsManager;
 
   /**
+   * The Chain Order ID resolver.
+   *
    * @var \Drupal\commerce_vipps\Resolver\ChainOrderIdResolverInterface
    */
   protected $chainOrderIdResolver;
 
   /**
+   * The event dispatcher.
+   *
    * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
    */
   protected $eventDispatcher;
@@ -39,8 +45,11 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
    * VippsLandingPageRedirectForm constructor.
    *
    * @param \Drupal\commerce_vipps\VippsManager $vippsManager
+   *   The vipps manager.
    * @param \Drupal\commerce_vipps\Resolver\ChainOrderIdResolverInterface $chainOrderIdResolver
+   *   The chain order id resolver.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
+   *   The event dispatcher.
    */
   public function __construct(VippsManager $vippsManager, ChainOrderIdResolverInterface $chainOrderIdResolver, EventDispatcherInterface $eventDispatcher) {
     $this->vippsManager = $vippsManager;
@@ -128,6 +137,7 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
    * Method to generate access token.
    *
    * @return string
+   *   Access token.
    */
   private function generateAuthToken() {
     try {

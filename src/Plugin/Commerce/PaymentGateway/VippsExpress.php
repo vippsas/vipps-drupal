@@ -9,8 +9,6 @@ use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\SupportsAuthorization
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\SupportsNotificationsInterface;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\SupportsRefundsInterface;
 use Drupal\commerce_price\Price;
-use Drupal\commerce_vipps\Event\ReturnFromVippsExpressEvent;
-use Drupal\commerce_vipps\Event\VippsEvents;
 use Drupal\commerce_vipps\Resolver\ChainShippingMethodsResolverInterface;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Routing\CurrentRouteMatch;
@@ -39,16 +37,22 @@ use zaporylie\Vipps\Model\Payment\FetchShippingCostResponse;
 class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, SupportsRefundsInterface, SupportsNotificationsInterface {
 
   /**
+   * The event dispatcher.
+   *
    * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
    */
   protected $eventDispatcher;
 
   /**
+   * The shipping method resolver.
+   *
    * @var \Drupal\commerce_vipps\Resolver\ChainShippingMethodsResolverInterface
    */
   protected $shippingMethodResolver;
 
   /**
+   * The current route match.
+   *
    * @var \Drupal\Core\Routing\CurrentRouteMatch
    */
   protected $currentRouteMatch;
@@ -66,7 +70,10 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
   }
 
   /**
+   * Service setter.
+   *
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
+   *   The event dispatcher.
    *
    * @return $this
    */
@@ -76,7 +83,10 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
   }
 
   /**
-   * @param \Drupal\commerce_vipps\Resolver\ChainShippingMethodsResolverInterface $shippingMethodsResolver
+   * Service setter.
+   *
+   * @param \Drupal\commerce_vipps\Resolver\ChainShippingMethodsResolverInterface $shippingMethodResolver
+   *   The shipping method resolver.
    *
    * @return $this
    */
@@ -86,7 +96,10 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
   }
 
   /**
+   * Service setter.
+   *
    * @param \Drupal\Core\Routing\CurrentRouteMatch $currentRouteMatch
+   *   The current route match.
    *
    * @return $this
    */
@@ -108,8 +121,9 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
 
       case 'commerce_vipps.shipping_details':
         return $this->doShippingDetails($request);
-
     }
+
+    return new JsonResponse('Unknown callback', Response::HTTP_FORBIDDEN);
   }
 
   /**
@@ -120,8 +134,15 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
   }
 
   /**
+   * Notification callback.
+   *
    * @param \Symfony\Component\HttpFoundation\Request $request
-   * @return
+   *   The request.
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
+   *   The response.
+   *
+   * @throws \Drupal\Core\Entity\EntityStorageException
    */
   protected function doNotify(Request $request) {
     try {
@@ -163,9 +184,13 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
   }
 
   /**
+   * Shipping details callback.
+   *
    * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The request.
    *
    * @return \Symfony\Component\HttpFoundation\JsonResponse|\Symfony\Component\HttpFoundation\Response
+   *   JSON response.
    */
   protected function doShippingDetails(Request $request) {
     $incomingData = $request->getContent();
@@ -189,10 +214,16 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
   }
 
   /**
+   * Retrives specific payment from the request.
+   *
    * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The request.
    *
    * @return \Drupal\commerce_payment\Entity\PaymentInterface
-   * @throws \InvalidArgumentException
+   *   Payment.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   * @throws \Drupal\Component\Plugin\Exception\PluginNotFoundException
    */
   protected function getPaymentFromRequest(Request $request) {
     /** @var \Drupal\commerce_payment\Entity\PaymentGatewayInterface $commerce_payment_gateway */
@@ -210,7 +241,11 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
     }
     $remote_id = $request->attributes->get('remote_id');
     $payment_storage = $this->entityTypeManager->getStorage('commerce_payment');
-    $matching_payments = $payment_storage->loadByProperties(['remote_id' => $remote_id, 'payment_gateway' => $commerce_payment_gateway->id(), 'order_id' => $order->id()]);
+    $matching_payments = $payment_storage->loadByProperties([
+      'remote_id' => $remote_id,
+      'payment_gateway' => $commerce_payment_gateway->id(),
+      'order_id' => $order->id(),
+    ]);
     if (count($matching_payments) !== 1) {
       throw new \InvalidArgumentException('Multiple or none payment found.');
     }
