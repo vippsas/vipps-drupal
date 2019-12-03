@@ -153,7 +153,7 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
     }
 
     /** @var \zaporylie\Vipps\Model\Payment\ExpressCheckOutPaymentRequest $content */
-    $content = ExpressCheckOutPaymentRequest::fromString($request->getContent());
+    $content = ExpressCheckOutPaymentRequest::fromString($stringContent = $request->getContent());
     switch ($content->getTransactionInfo()->getStatus()) {
       case 'RESERVE':
         $payment->setAmount(new Price((string) ($content->getTransactionInfo()->getAmount() / 100), $payment->getAmount()->getCurrencyCode()));
@@ -175,7 +175,7 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
         break;
 
       default:
-        \Drupal::logger('commerce_vipps')->critical('Data: @data', ['@data' => $content]);
+        \Drupal::logger('commerce_vipps')->critical('Undefined status: @data', ['@data' => $content->getTransactionInfo()->getStatus(), '@request_body' => $stringContent]);
         return new Response('', Response::HTTP_I_AM_A_TEAPOT);
     }
     $payment->save();
