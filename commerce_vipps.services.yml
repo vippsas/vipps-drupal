@@ -22,12 +22,6 @@ services:
     class: Drupal\commerce_vipps\Resolver\DefaultShippingMethodsResolver
     tags:
       - { name: commerce_vipps.shipping_methods_resolver, priority: -100 }
-  commerce_vipps.commerce_shipping_methods_resolver:
-    class: Drupal\commerce_vipps\Resolver\CommerceShippingMethodsResolver
-    arguments: ['@commerce_shipping.packer_manager', '@entity_type.manager']
-    abstract: true
-    tags:
-      - { name: commerce_vipps.shipping_methods_resolver, priority: -90 }
   commerce_vipps.event_subscriber:
     class: Drupal\commerce_vipps\EventSubscriber\CommerceVippsSubscriber
     tags:
