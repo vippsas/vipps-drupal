@@ -1,0 +1,4 @@
+services:
+  commerce_vipps_test_client.manager:
+    class: Drupal\commerce_vipps_test_client\VippsManager
+    decorates: commerce_vipps.manager

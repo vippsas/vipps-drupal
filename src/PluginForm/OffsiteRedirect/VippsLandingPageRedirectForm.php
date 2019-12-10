@@ -7,7 +7,7 @@ use Drupal\commerce_payment\PluginForm\PaymentOffsiteForm as BasePaymentOffsiteF
 use Drupal\commerce_vipps\Event\InitiatePaymentOptionsEvent;
 use Drupal\commerce_vipps\Event\VippsEvents;
 use Drupal\commerce_vipps\Resolver\ChainOrderIdResolverInterface;
-use Drupal\commerce_vipps\VippsManager;
+use Drupal\commerce_vipps\VippsManagerInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -44,14 +44,14 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
   /**
    * VippsLandingPageRedirectForm constructor.
    *
-   * @param \Drupal\commerce_vipps\VippsManager $vippsManager
+   * @param \Drupal\commerce_vipps\VippsManagerInterface $vippsManager
    *   The vipps manager.
    * @param \Drupal\commerce_vipps\Resolver\ChainOrderIdResolverInterface $chainOrderIdResolver
    *   The chain order id resolver.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The event dispatcher.
    */
-  public function __construct(VippsManager $vippsManager, ChainOrderIdResolverInterface $chainOrderIdResolver, EventDispatcherInterface $eventDispatcher) {
+  public function __construct(VippsManagerInterface $vippsManager, ChainOrderIdResolverInterface $chainOrderIdResolver, EventDispatcherInterface $eventDispatcher) {
     $this->vippsManager = $vippsManager;
     $this->chainOrderIdResolver = $chainOrderIdResolver;
     $this->eventDispatcher = $eventDispatcher;

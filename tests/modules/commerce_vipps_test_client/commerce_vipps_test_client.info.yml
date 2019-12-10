@@ -1,0 +1,7 @@
+name: Commerce Vipps Test Client
+description: Provides testing items for Commerce Vipps
+core: 8.x
+type: module
+dependencies:
+  - commerce:commerce_payment
+  - commerce_vipps:commerce_vipps

@@ -11,7 +11,7 @@ use zaporylie\Vipps\Vipps;
 /**
  * Vipps Manager.
  */
-class VippsManager {
+class VippsManager implements VippsManagerInterface {
 
   /**
    * The http client.

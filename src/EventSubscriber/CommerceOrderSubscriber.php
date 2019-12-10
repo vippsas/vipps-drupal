@@ -4,7 +4,7 @@ namespace Drupal\commerce_vipps\EventSubscriber;
 
 use Drupal\commerce_vipps\Event\ReturnFromVippsExpressEvent;
 use Drupal\commerce_vipps\Event\VippsEvents;
-use Drupal\commerce_vipps\VippsManager;
+use Drupal\commerce_vipps\VippsManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\state_machine\Event\WorkflowTransitionEvent;
 use Psr\Log\LoggerInterface;
@@ -28,7 +28,7 @@ class CommerceOrderSubscriber implements EventSubscriberInterface {
   /**
    * The Vipps manager.
    *
-   * @var \Drupal\commerce_vipps\VippsManager
+   * @var \Drupal\commerce_vipps\VippsManagerInterface
    */
   protected $vippsManager;
 
@@ -51,14 +51,14 @@ class CommerceOrderSubscriber implements EventSubscriberInterface {
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity manager.
-   * @param \Drupal\commerce_vipps\VippsManager $vippsManager
+   * @param \Drupal\commerce_vipps\VippsManagerInterface $vippsManager
    *   The vipps manager.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The event dispatcher.
    * @param \Psr\Log\LoggerInterface $logger
    *   The logger.
    */
-  public function __construct(EntityTypeManagerInterface $entityTypeManager, VippsManager $vippsManager, EventDispatcherInterface $eventDispatcher, LoggerInterface $logger) {
+  public function __construct(EntityTypeManagerInterface $entityTypeManager, VippsManagerInterface $vippsManager, EventDispatcherInterface $eventDispatcher, LoggerInterface $logger) {
     $this->entityTypeManager = $entityTypeManager;
     $this->vippsManager = $vippsManager;
     $this->eventDispatcher = $eventDispatcher;

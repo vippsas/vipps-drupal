@@ -8,11 +8,11 @@ use Drupal\commerce_payment\Exception\PaymentGatewayException;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\SupportsAuthorizationsInterface;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\SupportsNotificationsInterface;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\SupportsRefundsInterface;
-use Drupal\commerce_vipps\VippsManager;
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_payment\PaymentMethodTypeManager;
 use Drupal\commerce_payment\PaymentTypeManager;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayBase;
+use Drupal\commerce_vipps\VippsManagerInterface;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -49,7 +49,7 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
    *
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, PaymentTypeManager $payment_type_manager, PaymentMethodTypeManager $payment_method_type_manager, TimeInterface $time, VippsManager $vippsManager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, PaymentTypeManager $payment_type_manager, PaymentMethodTypeManager $payment_method_type_manager, TimeInterface $time, VippsManagerInterface $vippsManager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $entity_type_manager, $payment_type_manager, $payment_method_type_manager, $time);
     $this->vippsManager = $vippsManager;
   }
@@ -274,6 +274,12 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
     // If not specified, capture the entire amount.
     $amount = $amount ?: $payment->getAmount();
 
+    if ($amount->lessThan($payment->getAmount())) {
+      /** @var \Drupal\commerce_payment\Entity\PaymentInterface $parent_payment */
+      $parent_payment = $payment;
+      $payment = $parent_payment->createDuplicate();
+    }
+
     $remote_id = $payment->getRemoteId();
     $number = $amount->multiply(100)->getNumber();
     try {
@@ -308,6 +314,15 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
     $payment->setState('completed');
     $payment->setAmount($amount);
     $payment->save();
+
+    // Update parent payment if one exists.
+    if (isset($parent_payment)) {
+      $parent_payment->setAmount($parent_payment->getAmount()->subtract($amount));
+      if ($parent_payment->getAmount()->isZero()) {
+        $parent_payment->setState('authorization_voided');
+      }
+      $parent_payment->save();
+    }
   }
 
   /**
