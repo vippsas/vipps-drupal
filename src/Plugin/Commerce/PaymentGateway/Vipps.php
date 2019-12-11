@@ -33,6 +33,7 @@ use Drupal\commerce_price\Price;
  *    forms = {
  *     "offsite-payment" = "Drupal\commerce_vipps\PluginForm\OffsiteRedirect\VippsLandingPageRedirectForm",
  *   },
+ *   requires_billing_information = FALSE,
  * )
  */
 class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsInterface, SupportsRefundsInterface, SupportsNotificationsInterface {
