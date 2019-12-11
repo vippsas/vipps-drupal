@@ -82,7 +82,7 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
     $settings = $payment->getPaymentGateway()->getPluginConfiguration();
 
     // Create payment.
-    $payment->setRemoteId($settings['prefix'] . $this->chainOrderIdResolver->resolve());
+    $payment->setRemoteId($settings['prefix'] . $this->chainOrderIdResolver->resolve($payment));
 
     // Save order.
     $order = $payment->getOrder();

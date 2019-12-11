@@ -1,0 +1,5 @@
+services:
+  commerce_vipps_test_resolvers.test_order_id_resolver:
+    class: Drupal\commerce_vipps_test_resolvers\Resolver\TestOrderIdResolver
+    tags:
+      - { name: commerce_vipps.order_id_resolver, priority: 0 }

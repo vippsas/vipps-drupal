@@ -2,6 +2,8 @@
 
 namespace Drupal\commerce_vipps\Resolver;
 
+use Drupal\commerce_payment\Entity\PaymentInterface;
+
 /**
  * Chain Order Id Resolver.
  */
@@ -41,9 +43,9 @@ class ChainOrderIdResolver implements ChainOrderIdResolverInterface {
   /**
    * {@inheritdoc}
    */
-  public function resolve() {
+  public function resolve(PaymentInterface $payment) {
     foreach ($this->resolvers as $resolver) {
-      $result = $resolver->resolve();
+      $result = $resolver->resolve($payment);
       if ($result) {
         return $result;
       }
