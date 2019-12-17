@@ -23,6 +23,13 @@ function commerce_vipps_form_views_form_commerce_cart_form_default_alter(&$form,
       $payment_gateway_storage = \Drupal::entityTypeManager()->getStorage('commerce_payment_gateway');
       /** @var \Drupal\commerce_payment\Entity\PaymentGatewayInterface[] $payment_gateways */
       $payment_gateways = $payment_gateway_storage->loadByProperties(['plugin' => 'vipps_express', 'status' => TRUE]);
+      $order = Order::load($view->args[0]);
+      // Evaluate conditions for the remaining ones.
+      foreach ($payment_gateways as $payment_gateway_id => $payment_gateway) {
+        if (!$payment_gateway->applies($order)) {
+          unset($payment_gateways[$payment_gateway_id]);
+        }
+      }
       if (!$payment_gateways) {
         return;
       }
