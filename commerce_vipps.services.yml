@@ -42,3 +42,7 @@ services:
     arguments: ['@entity_type.manager']
     tags:
       - { name: event_subscriber }
+  access_check.commerce_vipps.remote_log:
+    class: Drupal\commerce_vipps\Access\RemoteLogAccessCheck
+    tags:
+      - { name: access_check, applies_to: _commerce_vipps_remote_log_access }

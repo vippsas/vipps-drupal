@@ -42,3 +42,17 @@ commerce_vipps.shipping_details:
         type: entity:commerce_payment_gateway
       order:
         type: entity:commerce_order
+
+commerce_vipps.remote_log:
+  path: '/admin/commerce/orders/{order}/payments/{payment}/remote-log'
+  defaults:
+    _title: 'Remote Transaction Log'
+    _controller: '\Drupal\commerce_vipps\Controller\RemoteLogController::build'
+  requirements:
+    _commerce_vipps_remote_log_access: 'TRUE'
+  options:
+    parameters:
+      payment:
+        type: entity:commerce_payment
+      order:
+        type: entity:commerce_order

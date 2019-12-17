@@ -59,3 +59,20 @@ function commerce_vipps_cart_form_submit($form, FormStateInterface $form_state) 
   $order->save();
   $form_state->setRedirect('commerce_checkout.form', ['commerce_order' => $order_id]);
 }
+
+/**
+ * Implements hook_entity_operation_alter().
+ */
+function commerce_vipps_entity_operation_alter(array &$operations, \Drupal\Core\Entity\EntityInterface $entity) {
+  if ($entity->getEntityTypeId() !== 'commerce_payment') {
+    return;
+  }
+  if (!in_array($entity->getPaymentGateway()->getPluginId(), ['vipps', 'vipps_express'])) {
+    return;
+  }
+  $operations['remote-log'] = [
+    'title' => t('Remote Transaction Log'),
+    'url' => $url = \Drupal\Core\Url::fromRoute('commerce_vipps.remote_log', ['order' => $entity->getOrderId(), 'payment' => $entity->id()]),
+    'access' => $url->access(),
+  ];
+}
