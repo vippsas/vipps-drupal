@@ -11,6 +11,7 @@ use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\SupportsRefundsInterf
 use Drupal\commerce_price\Price;
 use Drupal\commerce_vipps\Resolver\ChainShippingMethodsResolverInterface;
 use Drupal\Component\Utility\Xss;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\CurrentRouteMatch;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -26,8 +27,8 @@ use zaporylie\Vipps\Model\Payment\FetchShippingCostResponse;
  *
  * @CommercePaymentGateway(
  *   id = "vipps_express",
- *   label = "Vipps Express Checkout",
- *   display_label = "Vipps Express",
+ *   label = "Vipps Hurtigkasse",
+ *   display_label = "Vipps Hurtigkasse",
  *    forms = {
  *     "offsite-payment" = "Drupal\commerce_vipps\PluginForm\OffsiteRedirect\VippsExpressLandingPageRedirectForm",
  *   },
@@ -106,6 +107,45 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
   public function setCurrentRouteMatch(CurrentRouteMatch $currentRouteMatch) {
     $this->currentRouteMatch = $currentRouteMatch;
     return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function defaultConfiguration() {
+    return [
+      'button_style' => 'default',
+    ] + parent::defaultConfiguration();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+    $form = parent::buildConfigurationForm($form, $form_state);
+    $form['button_style'] = [
+      '#type' => 'radios',
+      '#title' => $this->t('Button style'),
+      '#default_value' => $this->configuration['button_style'],
+      '#options' => [
+        'default' => $this->t('Default'),
+        'image_small' => $this->t('Image - small'),
+        'image_medium' => $this->t('Image - medium'),
+        'image_large' => $this->t('Image - Large'),
+      ],
+    ];
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
+    parent::submitConfigurationForm($form, $form_state);
+    if (!$form_state->getErrors()) {
+      $values = $form_state->getValue($form['#parents']);
+      $this->configuration['button_style'] = $values['button_style'];
+    }
   }
 
   /**

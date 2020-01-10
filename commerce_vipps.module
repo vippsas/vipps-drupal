@@ -36,7 +36,7 @@ function commerce_vipps_form_views_form_commerce_cart_form_default_alter(&$form,
       foreach ($payment_gateways as $payment_gateway) {
         $form['actions']['express'] = [
           '#type' => 'submit',
-          '#value' => t('Express checkout'),
+          '#value' => t('Vipps Hurtigkasse'),
           '#weight' => 10,
           '#access' => \Drupal::currentUser()->hasPermission('access checkout'),
           '#submit' => array_merge($form['#submit'],
@@ -45,7 +45,11 @@ function commerce_vipps_form_views_form_commerce_cart_form_default_alter(&$form,
           '#payment_gateway' => $payment_gateway->id(),
           '#update_cart' => TRUE,
           '#show_update_message' => FALSE,
+          '#attached' => ['library' => ['commerce_vipps/hurtigkasse']],
         ];
+        if (($style = $payment_gateway->getPlugin()->getConfiguration()['button_style']) !== 'default') {
+          $form['actions']['express']['#attributes']['class'] = ['vipps-hurtigkasse--button-style', 'vipps-hurtigkasse--button-style--' . $style];
+        }
       }
     }
   }

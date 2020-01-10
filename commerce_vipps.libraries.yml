@@ -1,0 +1,5 @@
+hurtigkasse:
+  version: VERSION
+  css:
+    theme:
+      assets/vipps-hurtigkasse.css: {}

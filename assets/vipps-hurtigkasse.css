@@ -1,0 +1,32 @@
+input[type="submit"].vipps-hurtigkasse--button-style,
+button.vipps-hurtigkasse--button-style {
+  background-position: center;
+  -webkit-background-size: cover;
+  background-size: cover;
+  background-repeat: no-repeat;
+  border: none;
+  font-size: 0;
+  background-color: transparent !important;
+  border-radius: 5px;
+}
+
+input[type="submit"].vipps-hurtigkasse--button-style--image_small,
+button.vipps-hurtigkasse--button-style--image_small {
+  background-image: url(210px.png);
+  height: 42px;
+  width: 210px;
+}
+
+input[type="submit"].vipps-hurtigkasse--button-style--image_medium,
+button.vipps-hurtigkasse--button-style--image_medium {
+  background-image: url(210px2x.png);
+  height: 84px;
+  width: 410px;
+}
+
+input[type="submit"].vipps-hurtigkasse--button-style--image_large,
+button.vipps-hurtigkasse--button-style--image_large {
+  background-image: url(210px3x.png);
+  height: 126px;
+  width: 630px;
+}
