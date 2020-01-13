@@ -2,6 +2,7 @@
 
 namespace Drupal\commerce_vipps\Plugin\Commerce\PaymentGateway;
 
+use Drupal\commerce\Response\NeedsRedirectException;
 use Drupal\commerce_payment\Entity\PaymentInterface;
 use Drupal\commerce_payment\Exception\DeclineException;
 use Drupal\commerce_payment\Exception\PaymentGatewayException;
@@ -17,6 +18,7 @@ use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -173,6 +175,14 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
         $matching_payment->setState('completed');
         $matching_payment->save();
         break;
+
+      // Status INITIATE means that final status has not yet been issued, hence
+      // order must be kept locked in payment return state and status check must
+      // be retried every 10s.
+      // @see https://www.drupal.org/project/commerce_vipps/issues/3106042
+      case 'INITIATE':
+        sleep(10);
+        throw new NeedsRedirectException(Url::fromRoute('<current>')->toString());
 
       case 'RESERVE_FAILED':
       case 'SALE_FAILED':

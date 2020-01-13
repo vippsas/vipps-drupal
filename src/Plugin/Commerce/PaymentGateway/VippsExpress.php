@@ -13,6 +13,7 @@ use Drupal\commerce_vipps\Resolver\ChainShippingMethodsResolverInterface;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\CurrentRouteMatch;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -320,11 +321,18 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
         $matching_payment->save();
         break;
 
+      // Status INITIATE means that final status has not yet been issued, hence
+      // order must be kept locked in payment return state and status check must
+      // be retried every 10s.
+      // @see https://www.drupal.org/project/commerce_vipps/issues/3106042
+      case 'INITIATE':
+        sleep(10);
+        throw new NeedsRedirectException(Url::fromRoute('<current>')->toString());
+
       case 'RESERVE_FAILED':
       case 'SALE_FAILED':
       case 'CANCEL':
       case 'REJECTED':
-      case 'INITIATE':
         // @todo: There is no corresponding state in payment workflow but it's
         // still better to keep the payment with invalid state than delete it
         // entirely.
