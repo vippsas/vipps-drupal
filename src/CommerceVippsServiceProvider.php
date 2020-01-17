@@ -26,6 +26,11 @@ class CommerceVippsServiceProvider extends ServiceProviderBase {
         ->setAbstract(FALSE);
       $container->setDefinition('commerce_vipps.commerce_shipping_subscriber', $definition);
     }
+    if (isset($modules['commerce_cart'])) {
+      $definition = $container->getDefinition('commerce_vipps.cart_token_subscriber')
+        ->setAbstract(FALSE);
+      $container->setDefinition('commerce_vipps.cart_token_subscriber', $definition);
+    }
   }
 
 }

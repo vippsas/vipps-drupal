@@ -46,3 +46,9 @@ services:
     class: Drupal\commerce_vipps\Access\RemoteLogAccessCheck
     tags:
       - { name: access_check, applies_to: _commerce_vipps_remote_log_access }
+  commerce_vipps.cart_token_subscriber:
+    class: Drupal\commerce_vipps\EventSubscriber\CartTokenSubscriber
+    arguments: ['@commerce_cart.cart_session', '@logger.channel.commerce_vipps', '@tempstore.shared', '@entity_type.manager']
+    abstract: TRUE
+    tags:
+      - { name: 'event_subscriber' }

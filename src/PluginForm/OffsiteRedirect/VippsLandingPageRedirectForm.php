@@ -10,6 +10,7 @@ use Drupal\commerce_vipps\Resolver\ChainOrderIdResolverInterface;
 use Drupal\commerce_vipps\VippsManagerInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\TempStore\SharedTempStoreFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -19,6 +20,14 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
  * Handles the initiation of vipps payments.
  */
 class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements ContainerInjectionInterface {
+
+  /**
+   * Used for query name and tempStore collection.
+   *
+   * @internal
+   *   For internal use only!
+   */
+  const QUERY_NAME = 'commerce_vipps_payment_redirect_key';
 
   /**
    * The Vipps manager.
@@ -42,6 +51,13 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
   protected $eventDispatcher;
 
   /**
+   * Shared temporary storage.
+   *
+   * @var \Drupal\Core\TempStore\SharedTempStore
+   */
+  protected $tempStore;
+
+  /**
    * VippsLandingPageRedirectForm constructor.
    *
    * @param \Drupal\commerce_vipps\VippsManagerInterface $vippsManager
@@ -50,11 +66,14 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
    *   The chain order id resolver.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $eventDispatcher
    *   The event dispatcher.
+   * @param \Drupal\Core\TempStore\SharedTempStoreFactory $tempStore
+   *   The shared temporary storage factory.
    */
-  public function __construct(VippsManagerInterface $vippsManager, ChainOrderIdResolverInterface $chainOrderIdResolver, EventDispatcherInterface $eventDispatcher) {
+  public function __construct(VippsManagerInterface $vippsManager, ChainOrderIdResolverInterface $chainOrderIdResolver, EventDispatcherInterface $eventDispatcher, SharedTempStoreFactory $tempStore) {
     $this->vippsManager = $vippsManager;
     $this->chainOrderIdResolver = $chainOrderIdResolver;
     $this->eventDispatcher = $eventDispatcher;
+    $this->tempStore = $tempStore->get(self::QUERY_NAME);
   }
 
   /**
@@ -64,7 +83,8 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
     return new static(
       $container->get('commerce_vipps.manager'),
       $container->get('commerce_vipps.chain_order_id_resolver'),
-      $container->get('event_dispatcher')
+      $container->get('event_dispatcher'),
+      $container->get('tempstore.shared')
     );
   }
 
@@ -72,6 +92,7 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
    * {@inheritdoc}
    */
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+
     $form = parent::buildConfigurationForm($form, $form_state);
 
     /** @var \Drupal\commerce_payment\Entity\Payment $payment */
@@ -88,7 +109,10 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
     $order = $payment->getOrder();
     $order_changed = FALSE;
     if ($order->getData('vipps_auth_key') === NULL) {
-      $order->setData('vipps_auth_key', $this->generateAuthToken());
+      // Generate unique key, retry if key already exists.
+      do {
+        $order->setData('vipps_auth_key', $this->generateAuthToken());
+      } while ($this->tempStore->get($order->getData('vipps_auth_key')));
       $order_changed = TRUE;
     }
 
@@ -115,7 +139,7 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
           $this->t('Payment for order @order_id', ['@order_id' => $payment->getOrderId()]),
           // Get standard payment notification callback and add.
           rtrim($plugin->getNotifyUrl()->toString(), '/') . '/' . $payment->getOrderId(),
-          $form['#return_url'],
+          $this->addQueryToUrl($form['#return_url'], [self::QUERY_NAME => $order->getData('vipps_auth_key')]),
           $options
         )
         ->getURL();
@@ -129,6 +153,8 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
     if ($order_changed === TRUE) {
       $order->save();
     }
+    // Add vipps_auth_key to the temp store.
+    $this->tempStore->set($order->getData('vipps_auth_key'), $order->id());
 
     return $this->buildRedirectForm($form, $form_state, $url, []);
   }
@@ -147,6 +173,26 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
       $randomStr = uniqid('', TRUE);
     }
     return bin2hex($randomStr);
+  }
+
+  /**
+   * Adds custom parameter to string-formed url.
+   *
+   * @param string $url
+   *   Absolute URL.
+   * @param array $query
+   *   Array of query arguments to be added.
+   *
+   * @return string
+   *   Abslute URL with query arguments.
+   */
+  private function addQueryToUrl($url, array $query) {
+    $parsedUrl = parse_url($url);
+    if ($parsedUrl['path'] == NULL) {
+      $url .= '/';
+    }
+    $separator = !isset($parsedUrl['query']) ? '?' : '&';
+    return $url .= $separator . http_build_query($query);
   }
 
 }
