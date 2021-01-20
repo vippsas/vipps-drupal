@@ -3,8 +3,9 @@
 namespace Drupal\commerce_vipps\EventSubscriber;
 
 use Drupal\commerce_price\Price;
+use Drupal\commerce_shipping\LateOrderProcessor;
 use Drupal\commerce_shipping\PackerManagerInterface;
-use Drupal\commerce_shipping\ShipmentOrderProcessor;
+use Drupal\commerce_shipping\EarlyOrderProcessor;
 use Drupal\commerce_vipps\Event\ReturnFromVippsExpressEvent;
 use Drupal\commerce_vipps\Event\VippsEvents;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -32,9 +33,16 @@ class CommerceShippingSubscriber implements EventSubscriberInterface {
   /**
    * The shipment order processor.
    *
-   * @var \Drupal\commerce_shipping\ShipmentOrderProcessor
+   * @var \Drupal\commerce_shipping\EarlyOrderProcessor
    */
-  protected $shipmentOrderProcessor;
+  protected $earlyOrderProcessor;
+
+  /**
+   * The shipment order processor.
+   *
+   * @var \Drupal\commerce_shipping\LateOrderProcessor
+   */
+  protected $lateOrderProcessor;
 
   /**
    * CommerceShippingSubscriber constructor.
@@ -43,13 +51,16 @@ class CommerceShippingSubscriber implements EventSubscriberInterface {
    *   The entity type manager.
    * @param \Drupal\commerce_shipping\PackerManagerInterface $packerManager
    *   The packer manager.
-   * @param \Drupal\commerce_shipping\ShipmentOrderProcessor $shipmentOrderProcessor
+   * @param \Drupal\commerce_shipping\EarlyOrderProcessor $earlyOrderProcessor
+   *   The shipment order processor.
+   * @param \Drupal\commerce_shipping\LateOrderProcessor $lateOrderProcessor
    *   The shipment order processor.
    */
-  public function __construct(EntityTypeManagerInterface $entityTypeManager, PackerManagerInterface $packerManager, ShipmentOrderProcessor $shipmentOrderProcessor) {
+  public function __construct(EntityTypeManagerInterface $entityTypeManager, PackerManagerInterface $packerManager, EarlyOrderProcessor $earlyOrderProcessor, LateOrderProcessor $lateOrderProcessor) {
     $this->entityTypeManager = $entityTypeManager;
     $this->packerManager = $packerManager;
-    $this->shipmentOrderProcessor = $shipmentOrderProcessor;
+    $this->earlyOrderProcessor = $earlyOrderProcessor;
+    $this->lateOrderProcessor = $lateOrderProcessor;
   }
 
   /**
@@ -97,7 +108,8 @@ class CommerceShippingSubscriber implements EventSubscriberInterface {
     $shipment->save();
     $order->set('shipments', [$shipment]);
 
-    $this->shipmentOrderProcessor->process($order);
+    $this->earlyOrderProcessor->process($order);
+    $this->lateOrderProcessor->process($order);
   }
 
   /**

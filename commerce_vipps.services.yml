@@ -28,7 +28,7 @@ services:
       - { name: event_subscriber }
   commerce_vipps.commerce_shipping_subscriber:
     class: Drupal\commerce_vipps\EventSubscriber\CommerceShippingSubscriber
-    arguments: ['@entity_type.manager', '@commerce_shipping.packer_manager', '@commerce_shipping.shipment_order_processor']
+    arguments: ['@entity_type.manager', '@commerce_shipping.packer_manager', '@commerce_shipping.early_order_processor', '@commerce_shipping.late_order_processor']
     abstract: true
     tags:
       - { name: event_subscriber }
