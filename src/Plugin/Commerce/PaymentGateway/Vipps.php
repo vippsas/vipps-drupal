@@ -120,9 +120,9 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
     ];
     $form['serial_number'] = [
       '#type' => 'textfield',
-      '#title' => $this->t('Serial Number'),
+      '#title' => $this->t('Merchant Serial Number'),
       '#required' => TRUE,
-      '#description' => $this->t('Merchant Serial Number'),
+      '#description' => $this->t("Please note that provided MSN must be for the sales unit that will be used for payments, not the Partner/Supermerchant ID"),
       '#default_value' => $this->configuration['serial_number'],
     ];
     $form['prefix'] = [

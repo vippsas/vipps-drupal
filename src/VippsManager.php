@@ -2,9 +2,9 @@
 
 namespace Drupal\commerce_vipps;
 
+use Drupal\Core\Http\ClientFactory;
 use Http\Adapter\Guzzle6\Client as GuzzleClient;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\PaymentGatewayInterface;
-use GuzzleHttp\ClientInterface;
 use zaporylie\Vipps\Client;
 use zaporylie\Vipps\Vipps;
 
@@ -18,16 +18,16 @@ class VippsManager implements VippsManagerInterface {
    *
    * @var \GuzzleHttp\ClientInterface
    */
-  protected $httpClient;
+  protected $httpClientFactory;
 
   /**
    * VippsManager constructor.
    *
-   * @param \GuzzleHttp\ClientInterface $httpClient
+   * @param \Drupal\Core\Http\ClientFactory $http_client_factory
    *   The http client.
    */
-  public function __construct(ClientInterface $httpClient) {
-    $this->httpClient = $httpClient;
+  public function __construct(ClientFactory $http_client_factory) {
+    $this->httpClientFactory = $http_client_factory;
   }
 
   /**
@@ -51,7 +51,13 @@ class VippsManager implements VippsManagerInterface {
   protected function getVippsClient(PaymentGatewayInterface $paymentGateway) {
     $settings = $paymentGateway->getConfiguration();
     $client = new Client($settings['client_id'], [
-      'http_client' => new GuzzleClient($this->httpClient),
+      'http_client' => new GuzzleClient($this->httpClientFactory->fromOptions(
+        [
+          'headers' => [
+            'Merchant-Serial-Number' => $settings['serial_number'],
+          ],
+        ]
+      )),
       'endpoint' => $settings['mode'] === 'live' ? 'live' : 'test',
     ]);
     return new Vipps($client);
