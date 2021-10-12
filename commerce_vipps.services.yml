@@ -1,7 +1,7 @@
 services:
   commerce_vipps.manager:
     class: Drupal\commerce_vipps\VippsManager
-    arguments: ['@http_client_factory']
+    arguments: ['@http_client_factory', '@extension.list.module']
   logger.channel.commerce_vipps:
     class: Drupal\Core\Logger\LoggerChannel
     factory: logger.factory:get
