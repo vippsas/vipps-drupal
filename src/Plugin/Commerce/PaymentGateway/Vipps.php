@@ -31,8 +31,8 @@ use Drupal\Core\Lock\LockBackendInterface;
  *
  * @CommercePaymentGateway(
  *   id = "vipps",
- *   label = "Vipps Checkout",
- *   display_label = "Vipps",
+ *   label = "Vipps eComm",
+ *   display_label = "Vipps eComm",
  *    forms = {
  *     "offsite-payment" = "Drupal\commerce_vipps\PluginForm\OffsiteRedirect\VippsLandingPageRedirectForm",
  *   },
