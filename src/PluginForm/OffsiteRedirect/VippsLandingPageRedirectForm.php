@@ -2,6 +2,7 @@
 
 namespace Drupal\commerce_vipps\PluginForm\OffsiteRedirect;
 
+use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_payment\Exception\PaymentGatewayException;
 use Drupal\commerce_payment\PluginForm\PaymentOffsiteForm as BasePaymentOffsiteForm;
 use Drupal\commerce_vipps\Event\InitiatePaymentOptionsEvent;
@@ -151,6 +152,8 @@ class VippsLandingPageRedirectForm extends BasePaymentOffsiteForm implements Con
     // If the payment was successfully created at remote host.
     $payment->save();
     if ($order_changed === TRUE) {
+      // Order refresh must be disabled at this point.
+      $order->setRefreshState(OrderInterface::REFRESH_SKIP);
       $order->save();
     }
     // Add vipps_auth_key to the temp store.
