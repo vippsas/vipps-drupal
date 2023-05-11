@@ -171,7 +171,7 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
    * Do Consent Removal.
    */
   protected function doConsentRemoval(Request $request) {
-    \Drupal::logger('commerce_vipps')->alert('Method not supported');
+    $this->logger->alert('Method not supported');
   }
 
   /**
@@ -216,7 +216,7 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
         break;
 
       default:
-        \Drupal::logger('commerce_vipps')->critical('Undefined status: @data', ['@data' => $content->getTransactionInfo()->getStatus(), '@request_body' => $stringContent]);
+        $this->logger->critical('Undefined status: @data', ['@data' => $content->getTransactionInfo()->getStatus(), '@request_body' => $stringContent]);
         return new Response('', Response::HTTP_I_AM_A_TEAPOT);
     }
     $payment->save();
@@ -241,8 +241,7 @@ class VippsExpress extends Vipps implements SupportsAuthorizationsInterface, Sup
       $payment = $this->getPaymentFromRequest($request);
     }
     catch (\Exception $exception) {
-      // @todo Use dependency injection.
-      \Drupal::logger('commerce_vipps')->error($exception->getMessage());
+      $this->logger->error($exception->getMessage());
       return new JsonResponse('', Response::HTTP_FORBIDDEN);
     }
 

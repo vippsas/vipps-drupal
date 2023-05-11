@@ -24,6 +24,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use zaporylie\Vipps\Exceptions\VippsException;
 use Drupal\commerce_price\Price;
+use Drupal\Core\Lock\LockBackendInterface;
 
 /**
  * Provides the Vipps payment gateway.
@@ -48,29 +49,36 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
   protected $vippsManager;
 
   /**
-   * Vipps constructor.
+   * The lock service.
    *
-   * {@inheritdoc}
+   * @var \Drupal\Core\Lock\LockBackendInterface
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entity_type_manager, PaymentTypeManager $payment_type_manager, PaymentMethodTypeManager $payment_method_type_manager, TimeInterface $time, VippsManagerInterface $vippsManager) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition, $entity_type_manager, $payment_type_manager, $payment_method_type_manager, $time);
-    $this->vippsManager = $vippsManager;
-  }
+  protected $lock;
+
+  /**
+   * The logger.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static(
+    $object = new static(
       $configuration,
       $plugin_id,
       $plugin_definition,
       $container->get('entity_type.manager'),
       $container->get('plugin.manager.commerce_payment_type'),
       $container->get('plugin.manager.commerce_payment_method_type'),
-      $container->get('datetime.time'),
-      $container->get('commerce_vipps.manager')
+      $container->get('datetime.time')
     );
+    $object->vippsManager = $container->get('commerce_vipps.manager');
+    $object->lock = $container->get('lock');
+    $object->logger = $container->get('logger.channel.commerce_vipps');
+    return $object;
   }
 
   /**
@@ -155,9 +163,21 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
    */
   public function onReturn(OrderInterface $order, Request $request) {
     $remote_id = $order->getData('vipps_current_transaction');
+    $paymentGatewayId = $this->parentEntity->id();
+    $lockId = $paymentGatewayId . '__' . $remote_id;
+
+    // Keep checking if lock could be acquired for 5 seconds, then start over.
+    while ($this->lock->wait($lockId, 5) || !$this->lock->acquire($lockId)) {
+      // Looks like lock cannot be acquired, hold for one second and retry.
+      sleep(1);
+      $this->logger->notice('Waiting for lock @lock to be released', ['@lock' => $lockId]);
+    }
+    $this->logger->notice('Lock @lock was acquired', ['@lock' => $lockId]);
+
     $payment_storage = $this->entityTypeManager->getStorage('commerce_payment');
     $matching_payments = $payment_storage->loadByProperties(['remote_id' => $remote_id, 'order_id' => $order->id()]);
     if (count($matching_payments) !== 1) {
+      $this->lock->release($lockId);
       throw new PaymentGatewayException('More than one matching payment found');
     }
     /** @var \Drupal\commerce_payment\Entity\PaymentInterface $matching_payment */
@@ -182,6 +202,8 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
       // @see https://www.drupal.org/project/commerce_vipps/issues/3106042
       case 'INITIATE':
         sleep(10);
+        $this->lock->release($lockId);
+        $this->logger->notice('Lock @lock was released', ['@lock' => $lockId]);
         throw new NeedsRedirectException(Url::fromRoute('<current>')->toString());
 
       case 'RESERVE_FAILED':
@@ -196,9 +218,13 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
         $matching_payment->save();
 
       default:
+        $this->lock->release($lockId);
+        $this->logger->notice('Lock @lock was released', ['@lock' => $lockId]);
         throw new PaymentGatewayException("Oooops, something went wrong.");
     }
     // Seems like payment went through. Enjoy!
+    $this->lock->release($lockId);
+    $this->logger->notice('Lock @lock was released', ['@lock' => $lockId]);
   }
 
   /**
@@ -220,6 +246,7 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
     // @todo: Validate order and payment existance.
     /** @var \Drupal\commerce_payment\Entity\PaymentGatewayInterface $commerce_payment_gateway */
     $commerce_payment_gateway = $request->attributes->get('commerce_payment_gateway');
+    $payment_gateway_id = $commerce_payment_gateway->id();
 
     /** @var \Drupal\commerce_order\Entity\OrderInterface $order */
     $order = $request->attributes->get('order');
@@ -237,9 +264,22 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
     $content = $request->getContent();
 
     $remote_id = $request->attributes->get('remote_id');
+
+    $lockId = $payment_gateway_id . '__' . $remote_id;
+
+    // Keep checking if lock could be acquired for 5 seconds, then start over.
+    while ($this->lock->wait($lockId, 5) || !$this->lock->acquire($lockId)) {
+      // Looks like lock cannot be acquired, hold for one second and retry.
+      sleep(1);
+      $this->logger->notice('Waiting for lock @lock to be released', ['@lock' => $lockId]);
+    }
+    $this->logger->notice('Lock @lock was acquired', ['@lock' => $lockId]);
+
     $matching_payments = $payment_storage->loadByProperties(['remote_id' => $remote_id, 'payment_gateway' => $commerce_payment_gateway->id()]);
     if (count($matching_payments) !== 1) {
       // @todo: Log exception.
+      $this->lock->release($lockId);
+      $this->logger->notice('Lock @lock was released', ['@lock' => $lockId]);
       return new Response('', Response::HTTP_FORBIDDEN);
     }
     /** @var \Drupal\commerce_payment\Entity\PaymentInterface $matching_payment */
@@ -268,10 +308,15 @@ class Vipps extends OffsitePaymentGatewayBase implements SupportsAuthorizationsI
         break;
 
       default:
-        \Drupal::logger('commerce_vipps')->critical('Data: @data', ['@data' => $content]);
+        $this->logger->critical('Data: @data', ['@data' => $content]);
+        $this->lock->release($lockId);
+        $this->logger->notice('Lock @lock was released', ['@lock' => $lockId]);
         return new Response('', Response::HTTP_I_AM_A_TEAPOT);
     }
     $matching_payment->save();
+
+    $this->lock->release($lockId);
+    $this->logger->notice('Lock @lock was released', ['@lock' => $lockId]);
 
     return new Response('', Response::HTTP_OK);
   }
