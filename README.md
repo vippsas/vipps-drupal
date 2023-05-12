@@ -37,16 +37,16 @@ Before you install `commerce_vipps` module you must first install [Commerce 2.x]
 on your Drupal website. Please follow [this guide][Commerce installation guide]
 in order to learn how to install Commerce.
 
-Please remember that `commerce_vipps` module, similarly to other payment gateways
-integrations, is using Payment API provided by commerce_payment submodule - make
+Please remember that `commerce_vipps` module, similar to other payment gateway
+integrations, is using Payment API provided by the `commerce_payment` submodule. Make
 sure you have installed that module as well.
 
-In order to download the module and its dependencies use the following [Composer] command:
+In order to download the module and its dependencies, use the following [Composer] command:
 ```bash
 composer require drupal/commerce_vipps
 ```
-Enable module either via Drupal UI (navigate to /admin/modules) or CLI -
-read more about enabling the module on https://www.drupal.org/docs/8/extending-drupal-8/installing-drupal-8-modules#s-step-2-enable-the-module
+Enable the module either via Drupal UI (navigate to /admin/modules) or CLI.
+Read more about enabling the module on https://www.drupal.org/docs/8/extending-drupal-8/installing-drupal-8-modules#s-step-2-enable-the-module.
 
 CONTRIBUTION
 ------------
@@ -57,9 +57,9 @@ contribute a code - visit the [issue queue on drupal.org][Issue queue]
 SUPPORT
 -------
 
-* For technical support regarding the module reach out to module maintainer via issue queue - [https://www.drupal.org/node/add/project-issue/commerce_vipps][Create an issue]
+* For technical support regarding the module, reach out to the module maintainer via issue queue - [https://www.drupal.org/node/add/project-issue/commerce_vipps][Create an issue]
 * If you have technical problems regarding Drupal or Drupal Commerce, use https://drupal.stackexchange.com/
-* For merchant support contact [Vipps customer support][Vipps Support]
+* For merchant support, contact [Vipps customer support][Vipps Support]
 
 [Composer]: https://getcomposer.org/
 [Drupal installation guide]: https://www.drupal.org/docs/develop/using-composer/using-composer-to-install-drupal-and-manage-dependencies#download-core
