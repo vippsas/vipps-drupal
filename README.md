@@ -1,65 +1,59 @@
-Commerce Vipps
---------------
+# Commerce Vipps
 
-This module is published on [Drupal.org][Commerce Vipps] and [github.com][Commerce Vipps on GitHub].
+This module is published on [Drupal.org][Commerce Vipps] and [gitub.com][Commerce Vipps on GitHub].
 Please note that version on GitHub is used as a mirror only and all development is
 happening via [issue queue on drupal.org][Issue queue]. See the Contribution and Support sections
 below for more information.
 
-CONTENTS OF THIS FILE
----------------------
+## Table of contents
 
- * Introduction
- * Requirements
- * Installation
- * Contribution
- * Support
+ * [Introduction](#introduction)
+ * [Requirements](#requirements)
+ * [Installation](#installation)
+ * [Contribution](#contribution)
+ * [Support](#support)
 
-INTRODUCTION
-------------
+## Introduction
 
 Vipps is a Norwegian payment service, used by more than 3.5 million people.
 Vipps was originally developed by DNB, but is now a separate company, which
 includes BankID and BankAxept.
 
-REQUIREMENTS
-------------
+## Requirements
 
 * [Composer]
 * [Drupal 8.7+][Drupal installation guide]
 * [Commerce 2.x]
 * [Commerce Vipps module][Commerce Vipps]
 
-INSTALLATION
-------------
+## Installation
 
-Before you install `commerce_vipps` module you must first install [Commerce 2.x]
-on your Drupal website. Please follow [this guide][Commerce installation guide]
-in order to learn how to install Commerce.
+Before you install `commerce_vipps` module, you must first install [Commerce 2.x]
+on your Drupal website. Please follow the [Commerce installation guide][Commerce installation guide].
 
 Please remember that `commerce_vipps` module, similar to other payment gateway
 integrations, is using Payment API provided by the `commerce_payment` submodule. Make
-sure you have installed that module as well.
+sure you have installed that module.
 
-In order to download the module and its dependencies, use the following [Composer] command:
+In order to download the module and its dependencies, use the following [Composer][Composer] command:
+
 ```bash
 composer require drupal/commerce_vipps
 ```
-Enable the module either via Drupal UI (navigate to /admin/modules) or CLI.
-Read more about enabling the module on https://www.drupal.org/docs/8/extending-drupal-8/installing-drupal-8-modules#s-step-2-enable-the-module.
 
-CONTRIBUTION
-------------
+Enable the module either via Drupal UI (navigate to */admin/modules*) or CLI.
+Read more about enabling the module on the [Drupal help pages](https://www.drupal.org/docs/8/extending-drupal-8/installing-drupal-8-modules#s-step-2-enable-the-module).
+
+## Contribution
 
 You found a bug? You'd like to request a feature? You'd like to
-contribute a code - visit the [issue queue on drupal.org][Issue queue]
+contribute a code, visit the [issue queue on drupal.org][Issue queue].
 
-SUPPORT
--------
+## Support
 
-* For technical support regarding the module, reach out to the module maintainer via issue queue - [https://www.drupal.org/node/add/project-issue/commerce_vipps][Create an issue]
-* If you have technical problems regarding Drupal or Drupal Commerce, use https://drupal.stackexchange.com/
-* For merchant support, contact [Vipps customer support][Vipps Support]
+* For technical support regarding the module, reach out to the module maintainer via issue queue at [https://www.drupal.org/node/add/project-issue/commerce_vipps][Create an issue].
+* If you have technical problems regarding Drupal or Drupal Commerce, use <https://drupal.stackexchange.com/>.
+* For merchant support, contact [Vipps customer support][Vipps Support].
 
 [Composer]: https://getcomposer.org/
 [Drupal installation guide]: https://www.drupal.org/docs/develop/using-composer/using-composer-to-install-drupal-and-manage-dependencies#download-core
