@@ -1,6 +1,6 @@
 # Commerce Vipps
 
-This module is published on [Drupal.org][Commerce Vipps] and [gitub.com][Commerce Vipps on GitHub].
+This module is published on [Drupal.org][Commerce Vipps] and [github.com][Commerce Vipps on GitHub].
 Please note that version on GitHub is used as a mirror only and all development is
 happening via [issue queue on drupal.org][Issue queue]. See the Contribution and Support sections
 below for more information.
