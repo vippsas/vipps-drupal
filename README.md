@@ -1,5 +1,9 @@
 # Commerce Vipps
 
+<!-- START_COMMENT -->
+💥 Please use the plugin pages on [https://developer.vippsmobilepay.com](https://developer.vippsmobilepay.com/docs/vipps-plugins/). 💥
+<!-- END_COMMENT -->
+
 This module is published on [Drupal.org][Commerce Vipps] and [github.com][Commerce Vipps on GitHub].
 Please note that version on GitHub is used as a mirror only and all development is
 happening via [issue queue on drupal.org][Issue queue]. See the Contribution and Support sections
