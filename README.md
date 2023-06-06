@@ -1,27 +1,39 @@
+<!-- START_METADATA
+---
+title: Commerce Vipps plugin
+sidebar_position: 1
+pagination_next: null
+pagination_prev: null
+---
+END_METADATA -->
+
 # Commerce Vipps
 
 <!-- START_COMMENT -->
 💥 Please use the plugin pages on [https://developer.vippsmobilepay.com](https://developer.vippsmobilepay.com/docs/vipps-plugins/). 💥
 <!-- END_COMMENT -->
 
-This module is published on [Drupal.org][Commerce Vipps] and [github.com][Commerce Vipps on GitHub].
+This module is published on [Drupal.org][Commerce Vipps].
+
 Please note that version on GitHub is used as a mirror only and all development is
 happening via [issue queue on drupal.org][Issue queue]. See the Contribution and Support sections
 below for more information.
 
+<!-- START_COMMENT -->
 ## Table of contents
 
- * [Introduction](#introduction)
- * [Requirements](#requirements)
- * [Installation](#installation)
- * [Contribution](#contribution)
- * [Support](#support)
+* [Introduction](#introduction)
+* [Requirements](#requirements)
+* [Installation](#installation)
+* [Contribution](#contribution)
+* [Support](#support)
 
 ## Introduction
 
 Vipps is a Norwegian payment service, used by more than 3.5 million people.
 Vipps was originally developed by DNB, but is now a separate company, which
 includes BankID and BankAxept.
+<!-- END_COMMENT -->
 
 ## Requirements
 
@@ -58,6 +70,7 @@ contribute a code, visit the [issue queue on drupal.org][Issue queue].
 * For technical support regarding the module, reach out to the module maintainer via issue queue at [https://www.drupal.org/node/add/project-issue/commerce_vipps][Create an issue].
 * If you have technical problems regarding Drupal or Drupal Commerce, use <https://drupal.stackexchange.com/>.
 * For merchant support, contact [Vipps customer support][Vipps Support].
+
 
 [Composer]: https://getcomposer.org/
 [Drupal installation guide]: https://www.drupal.org/docs/develop/using-composer/using-composer-to-install-drupal-and-manage-dependencies#download-core
