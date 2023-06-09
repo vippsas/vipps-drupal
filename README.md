@@ -13,13 +13,15 @@ END_METADATA -->
 💥 Please use the plugin pages on [https://developer.vippsmobilepay.com](https://developer.vippsmobilepay.com/docs/vipps-plugins/). 💥
 <!-- END_COMMENT -->
 
-This module is published on [Drupal.org][Commerce Vipps].
+*This plugin is built and maintained by [Ny Media](https://www.nymedia.no/en).*
 
-Please note that version on GitHub is used as a mirror only and all development is
-happening via [issue queue on drupal.org][Issue queue]. See the Contribution and Support sections
-below for more information.
+This module is published on [drupal.org][Commerce Vipps].
 
 <!-- START_COMMENT -->
+All development is happening via [issue queue on drupal.org][Issue queue].
+See the [Contribution](#contribution) and [Support](#support) sections
+below for more information.
+
 ## Table of contents
 
 * [Introduction](#introduction)
