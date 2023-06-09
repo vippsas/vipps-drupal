@@ -1,6 +1,6 @@
 <!-- START_METADATA
 ---
-title: Commerce Vipps plugin
+title: Commerce Vipps
 sidebar_position: 1
 pagination_next: null
 pagination_prev: null
@@ -13,9 +13,7 @@ END_METADATA -->
 💥 Please use the plugin pages on [https://developer.vippsmobilepay.com](https://developer.vippsmobilepay.com/docs/vipps-plugins/). 💥
 <!-- END_COMMENT -->
 
-*This plugin is built and maintained by [Ny Media](https://www.nymedia.no/en).*
-
-This module is published on [drupal.org][Commerce Vipps].
+*This plugin is built and maintained by [Ny Media](https://www.nymedia.no/en) and hosted on [drupal.org][Commerce Vipps].*
 
 <!-- START_COMMENT -->
 All development is happening via [issue queue on drupal.org][Issue queue].
