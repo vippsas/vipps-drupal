@@ -9,7 +9,7 @@ END_METADATA -->
 
 # Commerce Vipps
 
-[![Support and development by Ny Media](./docs/images/nymedia.svg#gh-light-mode-only)![Support and development by Ny Media](./docs/images/nymedia.svg#gh-dark-mode-only)](https://www.vaimo.com/)
+[![Support and development by Ny Media](./docs/images/nymedia.svg#gh-light-mode-only)![Support and development by Ny Media](./docs/images/nymedia_dark.svg#gh-dark-mode-only)](https://www.nymedia.no/en)
 
 *This plugin is hosted on [drupal.org][Commerce Vipps].*
 
