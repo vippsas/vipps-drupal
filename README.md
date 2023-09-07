@@ -9,9 +9,9 @@ END_METADATA -->
 
 # Commerce Vipps
 
-[![Support and development by Ny Media](./docs/images/nymedia.svg#gh-light-mode-only)![Support and development by Ny Media](./docs/images/nymedia_dark.svg#gh-dark-mode-only)](https://www.nymedia.no/en)
+![Support and development by Ny Media ](./docs/images/nymedia.svg#gh-light-mode-only)![Support and development by Ny Media](./docs/images/nymedia_dark.svg#gh-dark-mode-only)
 
-*This plugin is hosted on [drupal.org][Commerce Vipps].*
+*This plugin is built and maintained by [Ny Media](https://www.nymedia.no/en) and hosted on [drupal.org][Commerce Vipps].*
 
 <!-- START_COMMENT -->
 💥 Please use the plugin pages on [https://developer.vippsmobilepay.com](https://developer.vippsmobilepay.com/docs/plugins/). 💥
