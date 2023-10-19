@@ -11,15 +11,21 @@ END_METADATA -->
 
 ![Support and development by Ny Media ](./docs/images/nymedia.svg#gh-light-mode-only)![Support and development by Ny Media](./docs/images/nymedia_dark.svg#gh-dark-mode-only)
 
+![Vipps](./docs/images/vipps.png) *Available for Vipps.*
+
+![MobilePay](./docs/images/mp.png) *Availability for MobilePay has not yet been determined.*
+
 *This plugin is built and maintained by [Ny Media](https://www.nymedia.no/en) and hosted on [drupal.org][Commerce Vipps].*
 
 <!-- START_COMMENT -->
-💥 Please use the plugin pages on [https://developer.vippsmobilepay.com](https://developer.vippsmobilepay.com/docs/plugins/). 💥
+💥 Please use the plugin pages on [https://developer.vippsmobilepay.com](https://developer.vippsmobilepay.com/docs/plugins-ext/drupal/). 💥
 
+<!-- END_COMMENT -->
 All development is happening via [issue queue on drupal.org][Issue queue].
 See the [Contribution](#contribution) and [Support](#support) sections
 below for more information.
 
+<!-- START_COMMENT -->
 ## Table of contents
 
 * [Introduction](#introduction)
