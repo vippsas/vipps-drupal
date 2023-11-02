@@ -74,7 +74,7 @@ contribute a code, visit the [issue queue on drupal.org][Issue queue].
 ## Support
 
 * For technical support regarding the module, reach out to the module maintainer via issue queue at [https://www.drupal.org/node/add/project-issue/commerce_vipps][Create an issue].
-* If you have technical problems regarding Drupal or Drupal Commerce, use <https://drupal.stackexchange.com/>.
+* If you have technical problems regarding Drupal or Drupal Commerce, use [Drupal Answers](https://drupal.stackexchange.com/).
 * For merchant support, contact [Vipps customer support][Vipps Support].
 
 
