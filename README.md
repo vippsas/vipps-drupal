@@ -86,4 +86,4 @@ contribute a code, visit the [issue queue on drupal.org][Issue queue].
 [Commerce Vipps on Github]: https://github.com/vippsas/vipps-drupal
 [Issue queue]: https://www.drupal.org/project/issues/commerce_vipps
 [Create an issue]: https://www.drupal.org/node/add/project-issue/commerce_vipps
-[Vipps Support]: https://www.vipps.no/kontakt-oss/
+[Vipps Support]: https://vippsmobilepay.com/help
