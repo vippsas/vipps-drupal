@@ -2,6 +2,7 @@
 ---
 title: Commerce Vipps
 sidebar_position: 1
+description: Offer Vipps as a payment method on your Drupal website.
 pagination_next: null
 pagination_prev: null
 ---
@@ -21,6 +22,10 @@ END_METADATA -->
 💥 Please use the plugin pages on [https://developer.vippsmobilepay.com](https://developer.vippsmobilepay.com/docs/plugins-ext/drupal/). 💥
 
 <!-- END_COMMENT -->
+
+
+Offer Vipps as a payment method on your Drupal website.
+
 All development is happening via [issue queue on drupal.org][Issue queue].
 See the [Contribution](#contribution) and [Support](#support) sections
 below for more information.
